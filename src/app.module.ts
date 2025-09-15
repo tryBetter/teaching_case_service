@@ -1,9 +1,17 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { PrismaModule } from './prisma/prisma.module';
+import { UsersModule } from './users/users.module';
+import { ArticlesModule } from './articles/articles.module';
 
 @Module({
-  imports: [],
+  imports: [
+    PrismaModule, // 在这里导入！
+    ArticlesModule,
+    UsersModule,
+    // ... 其他模块
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
