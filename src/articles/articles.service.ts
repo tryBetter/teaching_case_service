@@ -69,6 +69,18 @@ export class ArticlesService {
   }
 
   /**
+   * 发布文章
+   * @param id 文章id
+   * @returns 发布后的文章
+   */
+  publish(id: number) {
+    return this.prisma.article.update({
+      where: { id },
+      data: { published: true },
+    });
+  }
+
+  /**
    * 删除文章
    * @param id 文章id
    * @returns 删除后的文章
