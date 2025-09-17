@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ArticlesService } from './articles.service';
 import { CreateArticleDto } from './dto/create-article.dto';
@@ -23,6 +24,19 @@ export class ArticlesController {
   @Get()
   findAll() {
     return this.articlesService.findAll();
+  }
+
+  /**
+   * 根据传入的条件筛选查询文章，传入的条件为标题、是否模糊查询、作者id、是否发布。所有参数都不是必填项
+   */
+  @Get('many')
+  findMany(
+    @Query('title') title: string,
+    @Query('contains') contains: boolean,
+    @Query('authorId') authorId: number,
+    @Query('published') published: boolean,
+  ) {
+    return this.articlesService.findMany(title, contains, authorId, published);
   }
 
   @Get(':id')
