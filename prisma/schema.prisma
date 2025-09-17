@@ -44,7 +44,7 @@ model Article {
   author    User     @relation(fields: [authorId], references: [id])
   authorId  Int
 
-  media     Media[]
+  media     ArticleMedia[]
   comments  Comment[]
   favorites Favorite[]
   notes     Note[]
@@ -56,8 +56,22 @@ model Media {
   url       String
   createdAt DateTime @default(now())
 
-  article   Article @relation(fields: [articleId], references: [id])
+  // 多对多关系：一个媒体文件可以关联多个文章
+  articles  ArticleMedia[]
+}
+
+// 文章和媒体的多对多关系中间表
+model ArticleMedia {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
   articleId Int
+
+  media     Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId   Int
+
+  @@unique([articleId, mediaId]) // 防止重复关联
 }
 
 model Comment {
