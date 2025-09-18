@@ -18,6 +18,9 @@ import {
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
+import { Public } from '../auth/public.decorator';
+import { CurrentUser } from '../auth/user.decorator';
+import type { AuthenticatedUser } from '../auth/interfaces/user.interface';
 
 @ApiTags('评论管理')
 @Controller('comment')
@@ -72,8 +75,14 @@ export class CommentController {
     },
   })
   @Post()
-  create(@Body() createCommentDto: CreateCommentDto) {
-    return this.commentService.create(createCommentDto);
+  create(
+    @Body() createCommentDto: CreateCommentDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.commentService.create({
+      ...createCommentDto,
+      authorId: user.userId,
+    });
   }
 
   @ApiOperation({
@@ -147,6 +156,7 @@ export class CommentController {
       },
     },
   })
+  @Public()
   @Get()
   findAll(
     @Query('articleId') articleId?: string,
@@ -228,6 +238,7 @@ export class CommentController {
       },
     },
   })
+  @Public()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.commentService.findOne(+id);

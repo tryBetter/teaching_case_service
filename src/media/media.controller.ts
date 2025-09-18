@@ -26,6 +26,7 @@ import { CreateMediaDto } from './dto/create-media.dto';
 import { UpdateMediaDto } from './dto/update-media.dto';
 import { UploadMediaDto } from './dto/upload-media.dto';
 import type { UploadedFile as UploadedFileInterface } from './interfaces/uploaded-file.interface';
+import { Public } from '../auth/public.decorator';
 
 @ApiTags('媒体管理')
 @Controller('media')
@@ -206,6 +207,7 @@ export class MediaController {
     required: false,
     type: Number,
   })
+  @Public()
   @ApiResponse({ status: 200, description: '获取媒体文件列表成功' })
   @Get()
   findAll(@Query('userId') userId?: string) {
@@ -215,6 +217,7 @@ export class MediaController {
   @ApiOperation({ summary: '根据ID获取媒体文件' })
   @ApiParam({ name: 'id', description: '媒体文件ID' })
   @ApiResponse({ status: 200, description: '获取媒体文件成功' })
+  @Public()
   @ApiResponse({ status: 404, description: '媒体文件不存在' })
   @Get(':id')
   findOne(@Param('id') id: string) {

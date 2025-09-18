@@ -19,6 +19,9 @@ import {
 import { ArticlesService } from './articles.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
+import { Public } from '../auth/public.decorator';
+import { CurrentUser } from '../auth/user.decorator';
+import type { AuthenticatedUser } from '../auth/interfaces/user.interface';
 
 @ApiTags('文章管理')
 @Controller('articles')
@@ -29,10 +32,17 @@ export class ArticlesController {
   @ApiResponse({ status: 201, description: '文章创建成功' })
   @ApiResponse({ status: 400, description: '请求参数错误' })
   @Post()
-  create(@Body() createArticleDto: CreateArticleDto) {
-    return this.articlesService.create(createArticleDto);
+  create(
+    @Body() createArticleDto: CreateArticleDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.articlesService.create({
+      ...createArticleDto,
+      authorId: user.userId,
+    });
   }
 
+  @Public()
   @ApiOperation({ summary: '获取所有文章' })
   @ApiResponse({ status: 200, description: '获取文章列表成功' })
   @Get()
@@ -60,6 +70,7 @@ export class ArticlesController {
     required: false,
     type: Boolean,
   })
+  @Public()
   @ApiResponse({ status: 200, description: '筛选查询成功' })
   @Get('many')
   findMany(
@@ -74,6 +85,7 @@ export class ArticlesController {
   @ApiOperation({ summary: '根据ID获取文章' })
   @ApiParam({ name: 'id', description: '文章ID' })
   @ApiResponse({ status: 200, description: '获取文章成功' })
+  @Public()
   @ApiResponse({ status: 404, description: '文章不存在' })
   @Get(':id')
   findOne(@Param('id') id: string) {
