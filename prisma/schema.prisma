@@ -24,6 +24,7 @@ model User {
   email     String    @unique
   name      String?
   password  String
+  role      UserRole  @default(STUDENT)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
@@ -119,4 +120,10 @@ model Note {
 enum MediaType {
   IMAGE
   VIDEO
+}
+
+enum UserRole {
+  TEACHER    // 教师
+  ASSISTANT  // 助教
+  STUDENT    // 学生
 }

@@ -14,7 +14,12 @@ export class AuthService {
   async validateUser(
     email: string,
     password: string,
-  ): Promise<{ id: number; email: string; name: string | null } | null> {
+  ): Promise<{
+    id: number;
+    email: string;
+    name: string | null;
+    role: string;
+  } | null> {
     const user = await this.prisma.user.findUnique({
       where: { email },
     });
@@ -37,6 +42,7 @@ export class AuthService {
       email: user.email,
       sub: user.id,
       name: user.name,
+      role: user.role,
     };
 
     return {
@@ -45,6 +51,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
+        role: user.role,
       },
     };
   }

@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -22,15 +23,24 @@ import { UpdateArticleDto } from './dto/update-article.dto';
 import { Public } from '../auth/public.decorator';
 import { CurrentUser } from '../auth/user.decorator';
 import type { AuthenticatedUser } from '../auth/interfaces/user.interface';
+import {
+  RequirePermissions,
+  RequireTeacherOrAssistant,
+} from '../auth/decorators/roles.decorator';
+import { Permission } from '../auth/enums/permissions.enum';
+import { RolesGuard } from '../auth/guards/roles.guard';
 
 @ApiTags('文章管理')
 @Controller('articles')
+@UseGuards(RolesGuard)
 export class ArticlesController {
   constructor(private readonly articlesService: ArticlesService) {}
 
   @ApiOperation({ summary: '创建文章' })
   @ApiResponse({ status: 201, description: '文章创建成功' })
   @ApiResponse({ status: 400, description: '请求参数错误' })
+  @ApiResponse({ status: 403, description: '权限不足，需要教师或助教角色' })
+  @RequireTeacherOrAssistant()
   @Post()
   create(
     @Body() createArticleDto: CreateArticleDto,
@@ -121,6 +131,8 @@ export class ArticlesController {
   @ApiParam({ name: 'id', description: '文章ID' })
   @ApiResponse({ status: 200, description: '文章删除成功' })
   @ApiResponse({ status: 404, description: '文章不存在' })
+  @ApiResponse({ status: 403, description: '权限不足，需要教师角色' })
+  @RequirePermissions([Permission.ARTICLE_DELETE])
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.articlesService.remove(+id);
