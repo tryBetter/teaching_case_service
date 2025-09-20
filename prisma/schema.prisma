@@ -45,6 +45,13 @@ model Article {
   author    User     @relation(fields: [authorId], references: [id])
   authorId  Int
 
+  // 分类关联
+  category    Category @relation(fields: [categoryId], references: [id])
+  categoryId  Int
+
+  // 筛选条件关联
+  filterConditions ArticleFilterCondition[]
+
   media     ArticleMedia[]
   comments  Comment[]
   favorites Favorite[]
@@ -120,6 +127,58 @@ model Note {
 enum MediaType {
   IMAGE
   VIDEO
+}
+
+// 分类模型
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  articles Article[]
+}
+
+// 筛选条件类型模型
+model FilterConditionType {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  filterConditions FilterCondition[]
+}
+
+// 筛选条件值模型
+model FilterCondition {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  type    FilterConditionType @relation(fields: [typeId], references: [id])
+  typeId  Int
+
+  articles ArticleFilterCondition[]
+
+  @@unique([name, typeId]) // 同一类型下筛选条件名称唯一
+}
+
+// 文章筛选条件关联表
+model ArticleFilterCondition {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  article   Article         @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  articleId Int
+
+  filterCondition FilterCondition @relation(fields: [filterConditionId], references: [id], onDelete: Cascade)
+  filterConditionId Int
+
+  @@unique([articleId, filterConditionId]) // 防止重复关联
 }
 
 enum UserRole {

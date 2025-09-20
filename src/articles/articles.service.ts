@@ -1,15 +1,66 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '../../generated/prisma';
 
 @Injectable()
 export class ArticlesService {
   constructor(private prisma: PrismaService) {}
 
-  create(createArticleDto: CreateArticleDto) {
-    return this.prisma.article.create({ data: createArticleDto });
+  async create(createArticleDto: CreateArticleDto) {
+    const { filterConditionIds, ...articleData } = createArticleDto;
+
+    // 验证分类是否存在
+    const category = await this.prisma.category.findUnique({
+      where: { id: articleData.categoryId },
+    });
+    if (!category) {
+      throw new NotFoundException('分类不存在');
+    }
+
+    // 验证筛选条件是否存在
+    if (filterConditionIds && filterConditionIds.length > 0) {
+      const filterConditions = await this.prisma.filterCondition.findMany({
+        where: { id: { in: filterConditionIds } },
+      });
+      if (filterConditions.length !== filterConditionIds.length) {
+        throw new NotFoundException('部分筛选条件不存在');
+      }
+    }
+
+    // 创建文章并关联筛选条件
+    return this.prisma.article.create({
+      data: {
+        ...articleData,
+        filterConditions: filterConditionIds
+          ? {
+              create: filterConditionIds.map((filterConditionId) => ({
+                filterConditionId,
+              })),
+            }
+          : undefined,
+      },
+      include: {
+        category: true,
+        filterConditions: {
+          include: {
+            filterCondition: {
+              include: {
+                type: true,
+              },
+            },
+          },
+        },
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
   }
 
   /**
@@ -17,7 +68,27 @@ export class ArticlesService {
    * @returns 所有文章
    */
   findAll() {
-    return this.prisma.article.findMany();
+    return this.prisma.article.findMany({
+      include: {
+        category: true,
+        filterConditions: {
+          include: {
+            filterCondition: {
+              include: {
+                type: true,
+              },
+            },
+          },
+        },
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
   }
 
   /**
@@ -40,7 +111,28 @@ export class ArticlesService {
       ...(authorId !== undefined && { authorId }),
       ...(published !== undefined && { published }),
     };
-    return this.prisma.article.findMany({ where });
+    return this.prisma.article.findMany({
+      where,
+      include: {
+        category: true,
+        filterConditions: {
+          include: {
+            filterCondition: {
+              include: {
+                type: true,
+              },
+            },
+          },
+        },
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
   }
 
   /**
@@ -51,7 +143,26 @@ export class ArticlesService {
   findOne(id: number) {
     return this.prisma.article.findUnique({
       where: { id },
-      include: { comments: true },
+      include: {
+        comments: true,
+        category: true,
+        filterConditions: {
+          include: {
+            filterCondition: {
+              include: {
+                type: true,
+              },
+            },
+          },
+        },
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
   }
 
@@ -61,10 +172,63 @@ export class ArticlesService {
    * @param updateArticleDto 更新文章dto
    * @returns 更新后的文章
    */
-  update(id: number, updateArticleDto: UpdateArticleDto) {
+  async update(id: number, updateArticleDto: UpdateArticleDto) {
+    const { filterConditionIds, ...articleData } = updateArticleDto;
+
+    // 验证分类是否存在（如果提供了分类ID）
+    if (articleData.categoryId) {
+      const category = await this.prisma.category.findUnique({
+        where: { id: articleData.categoryId },
+      });
+      if (!category) {
+        throw new NotFoundException('分类不存在');
+      }
+    }
+
+    // 验证筛选条件是否存在（如果提供了筛选条件ID）
+    if (filterConditionIds && filterConditionIds.length > 0) {
+      const filterConditions = await this.prisma.filterCondition.findMany({
+        where: { id: { in: filterConditionIds } },
+      });
+      if (filterConditions.length !== filterConditionIds.length) {
+        throw new NotFoundException('部分筛选条件不存在');
+      }
+    }
+
+    // 更新文章
     return this.prisma.article.update({
       where: { id },
-      data: updateArticleDto,
+      data: {
+        ...articleData,
+        // 如果提供了筛选条件，先删除现有的关联，再创建新的关联
+        ...(filterConditionIds !== undefined && {
+          filterConditions: {
+            deleteMany: {},
+            create: filterConditionIds.map((filterConditionId) => ({
+              filterConditionId,
+            })),
+          },
+        }),
+      },
+      include: {
+        category: true,
+        filterConditions: {
+          include: {
+            filterCondition: {
+              include: {
+                type: true,
+              },
+            },
+          },
+        },
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
   }
 

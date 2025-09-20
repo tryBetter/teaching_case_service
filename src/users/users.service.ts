@@ -5,7 +5,7 @@ import {
   BatchCreateUserDto,
   BatchCreateUserResult,
 } from './dto/batch-create-user.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { UserRole } from '../auth/enums/user-role.enum';
 import * as bcrypt from 'bcrypt';
 

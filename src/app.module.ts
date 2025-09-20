@@ -10,6 +10,8 @@ import { MediaModule } from './media/media.module';
 import { CommentModule } from './comment/comment.module';
 import { FavoriteModule } from './favorite/favorite.module';
 import { NoteModule } from './note/note.module';
+import { CategoriesModule } from './categories/categories.module';
+import { FilterConditionsModule } from './filter-conditions/filter-conditions.module';
 import { JwtAuthGuard } from './auth/auth.guard';
 
 @Module({
@@ -22,6 +24,8 @@ import { JwtAuthGuard } from './auth/auth.guard';
     CommentModule,
     FavoriteModule,
     NoteModule,
+    CategoriesModule,
+    FilterConditionsModule,
   ],
   controllers: [AppController],
   providers: [
