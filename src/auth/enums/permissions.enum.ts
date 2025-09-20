@@ -47,6 +47,47 @@ export enum Permission {
 
 // 角色权限映射
 export const ROLE_PERMISSIONS = {
+  ADMIN: [
+    // 管理员拥有所有权限
+    Permission.USER_CREATE,
+    Permission.USER_READ,
+    Permission.USER_UPDATE,
+    Permission.USER_DELETE,
+    Permission.USER_LIST,
+
+    Permission.ARTICLE_CREATE,
+    Permission.ARTICLE_READ,
+    Permission.ARTICLE_UPDATE,
+    Permission.ARTICLE_DELETE,
+    Permission.ARTICLE_LIST,
+    Permission.ARTICLE_PUBLISH,
+
+    Permission.MEDIA_UPLOAD,
+    Permission.MEDIA_READ,
+    Permission.MEDIA_DELETE,
+    Permission.MEDIA_LIST,
+
+    Permission.COMMENT_CREATE,
+    Permission.COMMENT_READ,
+    Permission.COMMENT_UPDATE,
+    Permission.COMMENT_DELETE,
+    Permission.COMMENT_LIST,
+
+    Permission.FAVORITE_CREATE,
+    Permission.FAVORITE_READ,
+    Permission.FAVORITE_DELETE,
+    Permission.FAVORITE_LIST,
+
+    Permission.NOTE_CREATE,
+    Permission.NOTE_READ,
+    Permission.NOTE_UPDATE,
+    Permission.NOTE_DELETE,
+    Permission.NOTE_LIST,
+
+    Permission.SYSTEM_ADMIN,
+    Permission.ROLE_MANAGE,
+  ],
+
   TEACHER: [
     // 用户管理
     Permission.USER_READ,

@@ -39,6 +39,11 @@ export const RequirePermissions = (
 };
 
 /**
+ * 管理员角色装饰器
+ */
+export const RequireAdmin = () => Roles(UserRole.ADMIN);
+
+/**
  * 教师角色装饰器
  */
 export const RequireTeacher = () => Roles(UserRole.TEACHER);
@@ -54,6 +59,12 @@ export const RequireAssistant = () => Roles(UserRole.ASSISTANT);
 export const RequireStudent = () => Roles(UserRole.STUDENT);
 
 /**
+ * 管理员或教师角色装饰器
+ */
+export const RequireAdminOrTeacher = () =>
+  Roles(UserRole.ADMIN, UserRole.TEACHER);
+
+/**
  * 教师或助教角色装饰器
  */
 export const RequireTeacherOrAssistant = () =>
@@ -63,4 +74,4 @@ export const RequireTeacherOrAssistant = () =>
  * 所有角色装饰器
  */
 export const RequireAnyRole = () =>
-  Roles(UserRole.TEACHER, UserRole.ASSISTANT, UserRole.STUDENT);
+  Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.ASSISTANT, UserRole.STUDENT);

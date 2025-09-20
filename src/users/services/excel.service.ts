@@ -92,8 +92,9 @@ export class ExcelService {
         // 验证角色
         let role: UserRole = UserRole.STUDENT; // 默认角色
         if (roleStr) {
-          const validRoles = Object.values(UserRole);
           const roleMapping: { [key: string]: UserRole } = {
+            管理员: UserRole.ADMIN,
+            ADMIN: UserRole.ADMIN,
             教师: UserRole.TEACHER,
             TEACHER: UserRole.TEACHER,
             助教: UserRole.ASSISTANT,
@@ -136,6 +137,7 @@ export class ExcelService {
   generateUserTemplate(): Buffer {
     const headers = ['邮箱', '姓名', '密码', '角色'];
     const sampleData = [
+      ['admin@example.com', '管理员', 'admin123', '管理员'],
       ['user1@example.com', '张三', 'password123', '学生'],
       ['user2@example.com', '李四', 'password456', '助教'],
       ['user3@example.com', '王五', 'password789', '教师'],
