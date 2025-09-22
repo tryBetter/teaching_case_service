@@ -185,6 +185,18 @@ model ArticleFilterCondition {
   @@unique([articleId, filterConditionId]) // 防止重复关联
 }
 
+// 热搜词条模型
+model HotSearch {
+  id          Int      @id @default(autoincrement())
+  keyword     String   @unique // 热搜关键词，唯一
+  description String?  // 热搜描述
+  order       Int      @default(0) // 排序权重，数字越大越靠前
+  isActive    Boolean  @default(true) // 是否启用
+  clickCount  Int      @default(0) // 点击次数
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 enum UserRole {
   ADMIN      // 管理员
   TEACHER    // 教师

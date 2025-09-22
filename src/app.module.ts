@@ -12,6 +12,7 @@ import { FavoriteModule } from './favorite/favorite.module';
 import { NoteModule } from './note/note.module';
 import { CategoriesModule } from './categories/categories.module';
 import { FilterConditionsModule } from './filter-conditions/filter-conditions.module';
+import { HotSearchModule } from './hot-search/hot-search.module';
 import { JwtAuthGuard } from './auth/auth.guard';
 
 @Module({
@@ -26,6 +27,7 @@ import { JwtAuthGuard } from './auth/auth.guard';
     NoteModule,
     CategoriesModule,
     FilterConditionsModule,
+    HotSearchModule,
   ],
   controllers: [AppController],
   providers: [
