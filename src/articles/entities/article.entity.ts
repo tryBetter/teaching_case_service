@@ -28,6 +28,9 @@ export class Article {
   })
   summary?: string;
 
+  @ApiProperty({ description: '是否重点推荐', example: false })
+  featured: boolean;
+
   @ApiProperty({ description: '是否发布', example: false })
   published: boolean;
 

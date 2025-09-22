@@ -32,6 +32,15 @@ export class UpdateArticleDto extends PartialType(CreateArticleDto) {
   summary?: string;
 
   @ApiProperty({
+    description: '是否重点推荐',
+    example: false,
+    required: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  featured?: boolean;
+
+  @ApiProperty({
     description: '文章分类ID',
     example: 1,
     required: false,

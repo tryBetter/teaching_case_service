@@ -43,6 +43,15 @@ export class CreateArticleDto {
   @IsOptional()
   summary?: string;
 
+  @ApiProperty({
+    description: '是否重点推荐',
+    example: false,
+    required: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  featured?: boolean;
+
   @ApiProperty({ description: '是否发布', example: false, required: false })
   @IsBoolean()
   @IsOptional()
