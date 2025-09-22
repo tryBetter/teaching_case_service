@@ -38,6 +38,8 @@ model Article {
   id        Int      @id @default(autoincrement())
   title     String
   content   String?
+  cover     String?  // 文章封面图片URL
+  summary   String?  // 文章简介
   published Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

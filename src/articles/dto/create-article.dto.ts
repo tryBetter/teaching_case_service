@@ -25,6 +25,24 @@ export class CreateArticleDto {
   @IsOptional()
   content?: string;
 
+  @ApiProperty({
+    description: '文章封面图片URL',
+    example: 'https://example.com/cover.jpg',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  cover?: string;
+
+  @ApiProperty({
+    description: '文章简介',
+    example: '本文介绍了 NestJS 的基本概念和使用方法...',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  summary?: string;
+
   @ApiProperty({ description: '是否发布', example: false, required: false })
   @IsBoolean()
   @IsOptional()
