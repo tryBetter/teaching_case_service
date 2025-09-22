@@ -28,6 +28,13 @@ export class Article {
   })
   summary?: string;
 
+  @ApiProperty({
+    description: '文章关键词列表',
+    example: ['NestJS', 'Node.js', 'TypeScript', '后端开发'],
+    type: [String],
+  })
+  keywords: string[];
+
   @ApiProperty({ description: '是否重点推荐', example: false })
   featured: boolean;
 

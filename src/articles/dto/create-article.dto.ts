@@ -44,6 +44,17 @@ export class CreateArticleDto {
   summary?: string;
 
   @ApiProperty({
+    description: '文章关键词列表',
+    example: ['NestJS', 'Node.js', 'TypeScript', '后端开发'],
+    type: [String],
+    required: false,
+  })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  keywords?: string[];
+
+  @ApiProperty({
     description: '是否重点推荐',
     example: false,
     required: false,
