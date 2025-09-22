@@ -80,6 +80,19 @@ export class ArticlesController {
     required: false,
     type: Boolean,
   })
+  @ApiQuery({
+    name: 'categoryId',
+    description: '文章分类ID',
+    required: false,
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'filterConditionIds',
+    description: '筛选条件ID列表',
+    required: false,
+    type: [Number],
+    isArray: true,
+  })
   @Public()
   @ApiResponse({ status: 200, description: '筛选查询成功' })
   @Get('many')
@@ -88,8 +101,17 @@ export class ArticlesController {
     @Query('contains') contains: boolean,
     @Query('authorId') authorId: number,
     @Query('published') published: boolean,
+    @Query('categoryId') categoryId: number,
+    @Query('filterConditionIds') filterConditionIds: number[],
   ) {
-    return this.articlesService.findMany(title, contains, authorId, published);
+    return this.articlesService.findMany(
+      title,
+      contains,
+      authorId,
+      published,
+      categoryId,
+      filterConditionIds,
+    );
   }
 
   @ApiOperation({ summary: '根据ID获取文章' })
