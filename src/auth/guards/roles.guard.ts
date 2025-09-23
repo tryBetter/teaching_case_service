@@ -6,13 +6,9 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { UserRole } from '../enums/user-role.enum';
-import {
-  Permission,
-  hasPermission,
-  hasAnyPermission,
-  hasAllPermissions,
-} from '../enums/permissions.enum';
+import { Permission } from '../enums/permissions.enum';
 import type { AuthenticatedUser } from '../interfaces/user.interface';
+import { RolesService } from '../../roles/roles.service';
 
 export const ROLES_KEY = 'roles';
 export const PERMISSIONS_KEY = 'permissions';
@@ -25,9 +21,12 @@ export enum PermissionsMode {
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(
+    private reflector: Reflector,
+    private rolesService: RolesService,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     // 获取需要的角色
     const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(
       ROLES_KEY,
@@ -72,19 +71,20 @@ export class RolesGuard implements CanActivate {
       }
     }
 
-    // 检查权限
+    // 检查权限 - 从数据库动态读取
     if (requiredPermissions && requiredPermissions.length > 0) {
+      const userPermissions = await this.rolesService.getUserPermissions(
+        user.id,
+      );
       let hasRequiredPermissions = false;
 
       if (permissionsMode === PermissionsMode.ALL) {
-        hasRequiredPermissions = hasAllPermissions(
-          user.role,
-          requiredPermissions,
+        hasRequiredPermissions = requiredPermissions.every((permission) =>
+          userPermissions.includes(permission),
         );
       } else {
-        hasRequiredPermissions = hasAnyPermission(
-          user.role,
-          requiredPermissions,
+        hasRequiredPermissions = requiredPermissions.some((permission) =>
+          userPermissions.includes(permission),
         );
       }
 

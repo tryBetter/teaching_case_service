@@ -45,193 +45,40 @@ export enum Permission {
   ROLE_MANAGE = 'role:manage',
 }
 
-// 角色权限映射
-export const ROLE_PERMISSIONS = {
-  ADMIN: [
-    // 管理员拥有所有权限
-    Permission.USER_CREATE,
-    Permission.USER_READ,
-    Permission.USER_UPDATE,
-    Permission.USER_DELETE,
-    Permission.USER_LIST,
-
-    Permission.ARTICLE_CREATE,
-    Permission.ARTICLE_READ,
-    Permission.ARTICLE_UPDATE,
-    Permission.ARTICLE_DELETE,
-    Permission.ARTICLE_LIST,
-    Permission.ARTICLE_PUBLISH,
-
-    Permission.MEDIA_UPLOAD,
-    Permission.MEDIA_READ,
-    Permission.MEDIA_DELETE,
-    Permission.MEDIA_LIST,
-
-    Permission.COMMENT_CREATE,
-    Permission.COMMENT_READ,
-    Permission.COMMENT_UPDATE,
-    Permission.COMMENT_DELETE,
-    Permission.COMMENT_LIST,
-
-    Permission.FAVORITE_CREATE,
-    Permission.FAVORITE_READ,
-    Permission.FAVORITE_DELETE,
-    Permission.FAVORITE_LIST,
-
-    Permission.NOTE_CREATE,
-    Permission.NOTE_READ,
-    Permission.NOTE_UPDATE,
-    Permission.NOTE_DELETE,
-    Permission.NOTE_LIST,
-
-    Permission.SYSTEM_ADMIN,
-    Permission.ROLE_MANAGE,
-  ],
-
-  TEACHER: [
-    // 用户管理
-    Permission.USER_READ,
-    Permission.USER_LIST,
-    Permission.USER_UPDATE,
-
-    // 文章管理 - 全部权限
-    Permission.ARTICLE_CREATE,
-    Permission.ARTICLE_READ,
-    Permission.ARTICLE_UPDATE,
-    Permission.ARTICLE_DELETE,
-    Permission.ARTICLE_LIST,
-    Permission.ARTICLE_PUBLISH,
-
-    // 媒体管理 - 全部权限
-    Permission.MEDIA_UPLOAD,
-    Permission.MEDIA_READ,
-    Permission.MEDIA_DELETE,
-    Permission.MEDIA_LIST,
-
-    // 评论管理 - 全部权限
-    Permission.COMMENT_CREATE,
-    Permission.COMMENT_READ,
-    Permission.COMMENT_UPDATE,
-    Permission.COMMENT_DELETE,
-    Permission.COMMENT_LIST,
-
-    // 收藏管理 - 全部权限
-    Permission.FAVORITE_CREATE,
-    Permission.FAVORITE_READ,
-    Permission.FAVORITE_DELETE,
-    Permission.FAVORITE_LIST,
-
-    // 笔记管理 - 全部权限
-    Permission.NOTE_CREATE,
-    Permission.NOTE_READ,
-    Permission.NOTE_UPDATE,
-    Permission.NOTE_DELETE,
-    Permission.NOTE_LIST,
-
-    // 系统管理
-    Permission.SYSTEM_ADMIN,
-    Permission.ROLE_MANAGE,
-  ],
-
-  ASSISTANT: [
-    // 用户管理 - 只读
-    Permission.USER_READ,
-    Permission.USER_LIST,
-
-    // 文章管理 - 创建和编辑，不能删除
-    Permission.ARTICLE_CREATE,
-    Permission.ARTICLE_READ,
-    Permission.ARTICLE_UPDATE,
-    Permission.ARTICLE_LIST,
-    Permission.ARTICLE_PUBLISH,
-
-    // 媒体管理 - 上传和查看
-    Permission.MEDIA_UPLOAD,
-    Permission.MEDIA_READ,
-    Permission.MEDIA_LIST,
-
-    // 评论管理 - 全部权限
-    Permission.COMMENT_CREATE,
-    Permission.COMMENT_READ,
-    Permission.COMMENT_UPDATE,
-    Permission.COMMENT_DELETE,
-    Permission.COMMENT_LIST,
-
-    // 收藏管理 - 全部权限
-    Permission.FAVORITE_CREATE,
-    Permission.FAVORITE_READ,
-    Permission.FAVORITE_DELETE,
-    Permission.FAVORITE_LIST,
-
-    // 笔记管理 - 全部权限
-    Permission.NOTE_CREATE,
-    Permission.NOTE_READ,
-    Permission.NOTE_UPDATE,
-    Permission.NOTE_DELETE,
-    Permission.NOTE_LIST,
-  ],
-
-  STUDENT: [
-    // 用户管理 - 只能查看和更新自己的信息
-    Permission.USER_READ,
-    Permission.USER_UPDATE,
-
-    // 文章管理 - 只能查看
-    Permission.ARTICLE_READ,
-    Permission.ARTICLE_LIST,
-
-    // 媒体管理 - 只能查看
-    Permission.MEDIA_READ,
-    Permission.MEDIA_LIST,
-
-    // 评论管理 - 创建、查看、更新自己的评论
-    Permission.COMMENT_CREATE,
-    Permission.COMMENT_READ,
-    Permission.COMMENT_UPDATE,
-    Permission.COMMENT_LIST,
-
-    // 收藏管理 - 全部权限
-    Permission.FAVORITE_CREATE,
-    Permission.FAVORITE_READ,
-    Permission.FAVORITE_DELETE,
-    Permission.FAVORITE_LIST,
-
-    // 笔记管理 - 全部权限
-    Permission.NOTE_CREATE,
-    Permission.NOTE_READ,
-    Permission.NOTE_UPDATE,
-    Permission.NOTE_DELETE,
-    Permission.NOTE_LIST,
-  ],
-};
+// 注意：角色权限映射已移至数据库管理，这里保留兼容性
+// 新的权限检查将从数据库动态读取
 
 export enum PermissionsMode {
   ANY = 'any', // 拥有任一权限即可
   ALL = 'all', // 必须拥有所有权限
 }
 
-// 检查用户是否有特定权限
+// 注意：以下函数已被弃用，新的权限检查将通过 RolesService 从数据库动态读取
+// 保留这些函数是为了向后兼容，但建议使用 RolesService.checkUserPermission 方法
+
+// 检查用户是否有特定权限（已弃用）
 export function hasPermission(
   userRole: string,
   permission: Permission,
 ): boolean {
-  const rolePermissions =
-    ROLE_PERMISSIONS[userRole as keyof typeof ROLE_PERMISSIONS];
-  return rolePermissions ? rolePermissions.includes(permission) : false;
+  // 返回 false，强制使用数据库权限检查
+  return false;
 }
 
-// 检查用户是否有任一权限
+// 检查用户是否有任一权限（已弃用）
 export function hasAnyPermission(
   userRole: string,
   permissions: Permission[],
 ): boolean {
-  return permissions.some((permission) => hasPermission(userRole, permission));
+  // 返回 false，强制使用数据库权限检查
+  return false;
 }
 
-// 检查用户是否有所有权限
+// 检查用户是否有所有权限（已弃用）
 export function hasAllPermissions(
   userRole: string,
   permissions: Permission[],
 ): boolean {
-  return permissions.every((permission) => hasPermission(userRole, permission));
+  // 返回 false，强制使用数据库权限检查
+  return false;
 }

@@ -13,12 +13,14 @@ import { NoteModule } from './note/note.module';
 import { CategoriesModule } from './categories/categories.module';
 import { FilterConditionsModule } from './filter-conditions/filter-conditions.module';
 import { HotSearchModule } from './hot-search/hot-search.module';
+import { RolesModule } from './roles/roles.module';
 import { JwtAuthGuard } from './auth/auth.guard';
 
 @Module({
   imports: [
     PrismaModule,
     AuthModule,
+    RolesModule,
     ArticlesModule,
     UsersModule,
     MediaModule,

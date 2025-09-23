@@ -19,14 +19,21 @@ export class AuthService {
     email: string;
     name: string | null;
     role: string;
+    roleId: number;
   } | null> {
     const user = await this.prisma.user.findUnique({
       where: { email },
+      include: {
+        role: true,
+      },
     });
 
     if (user && (await bcrypt.compare(password, user.password))) {
       const { password: _password, ...result } = user;
-      return result;
+      return {
+        ...result,
+        role: result.role.name,
+      };
     }
     return null;
   }
@@ -52,6 +59,8 @@ export class AuthService {
         email: user.email,
         name: user.name,
         role: user.role,
+        roleId: user.roleId,
+        userId: user.id, // 保持向后兼容
       },
     };
   }

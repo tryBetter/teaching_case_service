@@ -110,7 +110,7 @@ export class ExcelService {
           email,
           name: name || undefined,
           password,
-          role,
+          roleId: role ? parseInt(role) : undefined,
         });
       }
 

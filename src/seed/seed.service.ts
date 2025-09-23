@@ -1,11 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { seedRolePermissions } from './role-permission.seed';
 
 @Injectable()
 export class SeedService {
   constructor(private prisma: PrismaService) {}
 
   async seedDefaultData() {
+    // 首先初始化角色权限
+    await seedRolePermissions(this.prisma);
+
     // 创建默认分类
     const categories = [
       { name: '科研案例', description: '科研相关的教学案例' },

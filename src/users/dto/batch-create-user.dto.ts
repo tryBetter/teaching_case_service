@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString, IsOptional, IsEnum } from 'class-validator';
-import { UserRole } from '../../auth/enums/user-role.enum';
+import { IsEmail, IsString, IsOptional, IsInt } from 'class-validator';
 
 export class BatchCreateUserDto {
   @ApiProperty({ description: '用户邮箱', example: 'user@example.com' })
@@ -17,14 +16,13 @@ export class BatchCreateUserDto {
   password: string;
 
   @ApiProperty({
-    description: '用户角色',
-    enum: UserRole,
-    example: UserRole.STUDENT,
+    description: '角色ID',
+    example: 1,
     required: false,
   })
   @IsOptional()
-  @IsEnum(UserRole, { message: '角色必须是有效的用户角色' })
-  role?: UserRole;
+  @IsInt({ message: '角色ID必须是数字' })
+  roleId?: number;
 }
 
 export class BatchCreateUserResult {

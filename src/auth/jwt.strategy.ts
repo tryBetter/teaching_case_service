@@ -25,7 +25,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         id: true,
         email: true,
         name: true,
-        role: true,
+        roleId: true,
+        role: {
+          select: {
+            name: true,
+          },
+        },
       },
     });
 
@@ -34,10 +39,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     return {
-      userId: user.id,
+      id: user.id,
       email: user.email,
       name: user.name,
-      role: user.role as string,
+      role: user.role.name,
+      roleId: user.roleId,
+      userId: user.id, // 保持向后兼容
     };
   }
 }

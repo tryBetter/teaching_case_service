@@ -24,9 +24,12 @@ model User {
   email     String    @unique
   name      String?
   password  String
-  role      UserRole  @default(STUDENT)
+  roleId    Int       // 外键关联到角色表
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+
+  // 关联到角色
+  role      Role      @relation(fields: [roleId], references: [id])
 
   articles  Article[]
   comments  Comment[]
@@ -197,9 +200,48 @@ model HotSearch {
   updatedAt   DateTime @updatedAt
 }
 
-enum UserRole {
-  ADMIN      // 管理员
-  TEACHER    // 教师
-  ASSISTANT  // 助教
-  STUDENT    // 学生
+// 角色模型
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique // 角色名称
+  description String?  // 角色描述
+  isSystem    Boolean  @default(false) // 是否为系统角色（不可删除）
+  isActive    Boolean  @default(true) // 是否启用
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 关联到用户
+  users       User[]
+  
+  // 关联到权限
+  rolePermissions RolePermission[]
+}
+
+// 权限模型
+model Permission {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique // 权限代码，如 'user:create'
+  name        String   // 权限名称
+  description String?  // 权限描述
+  module      String   // 所属模块，如 'user', 'article'
+  action      String   // 操作类型，如 'create', 'read', 'update', 'delete'
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 关联到角色
+  rolePermissions RolePermission[]
+}
+
+// 角色权限关联表
+model RolePermission {
+  id           Int      @id @default(autoincrement())
+  createdAt    DateTime @default(now())
+
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId       Int
+
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  permissionId Int
+
+  @@unique([roleId, permissionId]) // 防止重复关联
 }

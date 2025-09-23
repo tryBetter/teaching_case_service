@@ -1,4 +1,8 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {
@@ -6,32 +10,65 @@ import {
   BatchCreateUserResult,
 } from './dto/batch-create-user.dto';
 import { PrismaService } from '../prisma/prisma.service';
-import { UserRole } from '../auth/enums/user-role.enum';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
   async create(createUserDto: CreateUserDto) {
+    // 如果没有指定角色ID，查找默认的学生角色
+    let roleId = createUserDto.roleId;
+    if (!roleId) {
+      const defaultRole = await this.prisma.role.findFirst({
+        where: { name: '学生', isActive: true },
+      });
+      if (!defaultRole) {
+        throw new NotFoundException('未找到默认角色');
+      }
+      roleId = defaultRole.id;
+    } else {
+      // 验证角色是否存在
+      const role = await this.prisma.role.findUnique({
+        where: { id: roleId, isActive: true },
+      });
+      if (!role) {
+        throw new NotFoundException('指定的角色不存在或已禁用');
+      }
+    }
+
     // 加密密码
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
     // 创建用户
     return this.prisma.user.create({
       data: {
-        ...createUserDto,
+        email: createUserDto.email,
+        name: createUserDto.name,
         password: hashedPassword,
+        roleId,
+      },
+      include: {
+        role: true,
       },
     });
   }
 
   findAll() {
-    // 查询所有用户
-    return this.prisma.user.findMany();
+    // 查询所有用户，包含角色信息
+    return this.prisma.user.findMany({
+      include: {
+        role: true,
+      },
+    });
   }
 
   findOne(id: number) {
-    return this.prisma.user.findUnique({ where: { id } });
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        role: true,
+      },
+    });
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {
@@ -79,13 +116,48 @@ export class UsersService {
         // 加密密码
         const hashedPassword = await bcrypt.hash(user.password, 10);
 
+        // 如果没有指定角色ID，查找默认的学生角色
+        let roleId = user.roleId;
+        if (!roleId) {
+          const defaultRole = await this.prisma.role.findFirst({
+            where: { name: '学生', isActive: true },
+          });
+          if (!defaultRole) {
+            result.failedUsers.push({
+              user,
+              error: '未找到默认角色',
+              row: i + 2,
+            });
+            result.failureCount++;
+            continue;
+          }
+          roleId = defaultRole.id;
+        } else {
+          // 验证角色是否存在
+          const role = await this.prisma.role.findUnique({
+            where: { id: roleId, isActive: true },
+          });
+          if (!role) {
+            result.failedUsers.push({
+              user,
+              error: '指定的角色不存在或已禁用',
+              row: i + 2,
+            });
+            result.failureCount++;
+            continue;
+          }
+        }
+
         // 创建用户
         const createdUser = await this.prisma.user.create({
           data: {
             email: user.email,
             name: user.name,
             password: hashedPassword,
-            role: user.role || 'STUDENT',
+            roleId,
+          },
+          include: {
+            role: true,
           },
         });
 
@@ -93,7 +165,7 @@ export class UsersService {
           email: createdUser.email,
           name: createdUser.name || undefined,
           password: '[已加密]',
-          role: createdUser.role as UserRole,
+          roleId: createdUser.roleId,
         });
         result.successCount++;
       } catch (error) {
