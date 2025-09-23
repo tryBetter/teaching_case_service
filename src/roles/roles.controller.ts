@@ -28,7 +28,7 @@ import { Permission } from '../auth/enums/permissions.enum';
 @ApiTags('角色权限管理')
 @Controller('roles')
 @UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
