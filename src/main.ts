@@ -74,22 +74,23 @@ POST /auth/login
       'JWT-auth', // 这是认证方案的名称
     )
     .addTag('认证管理', '用户登录、注册、JWT token管理')
-    .addTag('角色权限管理', '角色和权限的CRUD操作、权限分配')
     .addTag('用户管理', '用户的创建、查询、更新、删除')
+    .addTag('角色权限管理', '角色和权限的CRUD操作、权限分配')
     .addTag('文章管理', '文章的创建、查询、更新、删除')
     .addTag('分类管理', '文章分类的管理')
-    .addTag('媒体管理', '文件上传、下载、删除')
     .addTag('评论管理', '评论的创建、查询、更新、删除')
     .addTag('收藏管理', '收藏的创建、查询、删除')
     .addTag('笔记管理', '笔记的创建、查询、更新、删除')
+    .addTag('媒体管理', '文件上传、下载、删除')
     .addTag('筛选条件管理', '筛选条件的管理')
-    .addTag('热搜管理', '热搜关键词的管理')
+    .addTag('热搜词条管理', '热搜关键词的管理')
+    .addTag('应用', '系统基础信息和状态')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document, {
     swaggerOptions: {
       persistAuthorization: true, // 保持认证状态
-      tagsSorter: 'alpha', // 标签按字母排序
+      // tagsSorter: 'alpha', // 移除字母排序，使用定义的顺序
       operationsSorter: 'alpha', // 操作按字母排序
     },
   });
