@@ -376,10 +376,11 @@ export async function seedRolePermissions(prisma: PrismaService) {
       'article:read',
       'article:update',
       'article:list',
-      'article:publish',
-      'media:upload',
+      // 注意：助教不能发布文章（article:publish）
+      // 注意：助教不能上传媒体（media:upload）
       'media:read',
       'media:list',
+      // 注意：助教不能删除媒体（media:delete）
       'comment:create',
       'comment:read',
       'comment:update',

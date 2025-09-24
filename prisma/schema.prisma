@@ -35,6 +35,10 @@ model User {
   comments  Comment[]
   favorites Favorite[]
   notes     Note[]
+
+  // 教师-助教关联关系
+  teacherAssistants TeacherAssistant[] @relation("TeacherAssistants") // 作为教师时的助教列表
+  assistantTeachers TeacherAssistant[] @relation("AssistantTeachers") // 作为助教时的教师列表
 }
 
 model Article {
@@ -244,4 +248,21 @@ model RolePermission {
   permissionId Int
 
   @@unique([roleId, permissionId]) // 防止重复关联
+}
+
+// 教师-助教关联模型
+model TeacherAssistant {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 教师（被助教协助的用户）
+  teacher   User @relation("TeacherAssistants", fields: [teacherId], references: [id], onDelete: Cascade)
+  teacherId Int
+
+  // 助教（协助教师的用户）
+  assistant User @relation("AssistantTeachers", fields: [assistantId], references: [id], onDelete: Cascade)
+  assistantId Int
+
+  @@unique([teacherId, assistantId]) // 防止重复关联
 }

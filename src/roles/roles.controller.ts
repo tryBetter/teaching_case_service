@@ -21,6 +21,7 @@ import { UpdateRoleDto } from './dto/update-role.dto';
 import { AssignPermissionsDto } from './dto/assign-permissions.dto';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
+import { CreateTeacherAssistantDto } from './dto/create-teacher-assistant.dto';
 import { JwtAuthGuard } from '../auth/auth.guard';
 import { RequirePermissions } from '../auth/decorators/roles.decorator';
 import { Permission } from '../auth/enums/permissions.enum';
@@ -561,5 +562,222 @@ export class RolesController {
   @Post('init')
   createDefaultRoles() {
     return this.rolesService.createDefaultRoles();
+  }
+
+  // ==================== 教师-助教关联管理 ====================
+
+  @ApiOperation({
+    summary: '创建教师-助教关联',
+    description:
+      '为助教关联一位教师。助教只能编辑和浏览被关联教师的文章和媒体资源，但不能删除或发布文章，也不能管理媒体文件。',
+  })
+  @ApiResponse({
+    status: 201,
+    description: '关联关系创建成功',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'number', example: 1, description: '关联关系ID' },
+        teacherId: { type: 'number', example: 1, description: '教师用户ID' },
+        assistantId: { type: 'number', example: 2, description: '助教用户ID' },
+        createdAt: {
+          type: 'string',
+          format: 'date-time',
+          description: '创建时间',
+        },
+        teacher: {
+          type: 'object',
+          properties: {
+            id: { type: 'number', example: 1 },
+            name: { type: 'string', example: '张老师' },
+            email: { type: 'string', example: 'teacher@example.com' },
+          },
+          description: '教师信息',
+        },
+        assistant: {
+          type: 'object',
+          properties: {
+            id: { type: 'number', example: 2 },
+            name: { type: 'string', example: '李助教' },
+            email: { type: 'string', example: 'assistant@example.com' },
+          },
+          description: '助教信息',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: '请求参数错误' })
+  @ApiResponse({ status: 404, description: '教师或助教不存在' })
+  @ApiResponse({ status: 409, description: '关联关系已存在或角色验证失败' })
+  @ApiResponse({ status: 403, description: '权限不足，需要角色管理权限' })
+  @RequirePermissions([Permission.ROLE_MANAGE])
+  @Post('teacher-assistant')
+  createTeacherAssistantRelation(@Body() createDto: CreateTeacherAssistantDto) {
+    return this.rolesService.createTeacherAssistantRelation(createDto);
+  }
+
+  @ApiOperation({
+    summary: '获取所有教师-助教关联',
+    description: '获取系统中所有的教师-助教关联关系列表。',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '获取关联关系列表成功',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'number', example: 1 },
+          teacherId: { type: 'number', example: 1 },
+          assistantId: { type: 'number', example: 2 },
+          createdAt: { type: 'string', format: 'date-time' },
+          teacher: {
+            type: 'object',
+            properties: {
+              id: { type: 'number' },
+              name: { type: 'string' },
+              email: { type: 'string' },
+              role: {
+                type: 'object',
+                properties: { name: { type: 'string' } },
+              },
+            },
+          },
+          assistant: {
+            type: 'object',
+            properties: {
+              id: { type: 'number' },
+              name: { type: 'string' },
+              email: { type: 'string' },
+              role: {
+                type: 'object',
+                properties: { name: { type: 'string' } },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 403, description: '权限不足，需要角色管理权限' })
+  @RequirePermissions([Permission.ROLE_MANAGE])
+  @Get('teacher-assistant')
+  getTeacherAssistantRelations() {
+    return this.rolesService.getTeacherAssistantRelations();
+  }
+
+  @ApiOperation({
+    summary: '获取助教关联的教师列表',
+    description: '获取指定助教关联的所有教师列表。',
+  })
+  @ApiParam({
+    name: 'assistantId',
+    description: '助教用户ID',
+    example: 2,
+    type: 'number',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '获取教师列表成功',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'number', example: 1 },
+          teacherId: { type: 'number', example: 1 },
+          assistantId: { type: 'number', example: 2 },
+          teacher: {
+            type: 'object',
+            properties: {
+              id: { type: 'number' },
+              name: { type: 'string' },
+              email: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: '助教不存在' })
+  @ApiResponse({ status: 409, description: '指定用户不是助教角色' })
+  @ApiResponse({ status: 403, description: '权限不足，需要角色管理权限' })
+  @RequirePermissions([Permission.ROLE_MANAGE])
+  @Get('assistant/:assistantId/teachers')
+  getTeachersByAssistant(@Param('assistantId') assistantId: string) {
+    return this.rolesService.getTeachersByAssistant(+assistantId);
+  }
+
+  @ApiOperation({
+    summary: '获取教师关联的助教列表',
+    description: '获取指定教师关联的所有助教列表。',
+  })
+  @ApiParam({
+    name: 'teacherId',
+    description: '教师用户ID',
+    example: 1,
+    type: 'number',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '获取助教列表成功',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'number', example: 1 },
+          teacherId: { type: 'number', example: 1 },
+          assistantId: { type: 'number', example: 2 },
+          assistant: {
+            type: 'object',
+            properties: {
+              id: { type: 'number' },
+              name: { type: 'string' },
+              email: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: '教师不存在' })
+  @ApiResponse({ status: 409, description: '指定用户不是教师角色' })
+  @ApiResponse({ status: 403, description: '权限不足，需要角色管理权限' })
+  @RequirePermissions([Permission.ROLE_MANAGE])
+  @Get('teacher/:teacherId/assistants')
+  getAssistantsByTeacher(@Param('teacherId') teacherId: string) {
+    return this.rolesService.getAssistantsByTeacher(+teacherId);
+  }
+
+  @ApiOperation({
+    summary: '删除教师-助教关联',
+    description: '删除指定的教师-助教关联关系。',
+  })
+  @ApiParam({
+    name: 'id',
+    description: '关联关系ID',
+    example: 1,
+    type: 'number',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '关联关系删除成功',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'number', example: 1 },
+        teacherId: { type: 'number', example: 1 },
+        assistantId: { type: 'number', example: 2 },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: '关联关系不存在' })
+  @ApiResponse({ status: 403, description: '权限不足，需要角色管理权限' })
+  @RequirePermissions([Permission.ROLE_MANAGE])
+  @Delete('teacher-assistant/:id')
+  deleteTeacherAssistantRelation(@Param('id') id: string) {
+    return this.rolesService.deleteTeacherAssistantRelation(+id);
   }
 }

@@ -10,6 +10,7 @@ import { UpdateRoleDto } from './dto/update-role.dto';
 import { AssignPermissionsDto } from './dto/assign-permissions.dto';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
+import { CreateTeacherAssistantDto } from './dto/create-teacher-assistant.dto';
 
 export interface CreatedPermission {
   id: number;
@@ -610,5 +611,191 @@ export class RolesService {
     }
 
     return createdRoles;
+  }
+
+  // ==================== 教师-助教关联管理 ====================
+
+  async createTeacherAssistantRelation(createDto: CreateTeacherAssistantDto) {
+    // 验证教师和助教是否存在
+    const teacher = await this.prisma.user.findUnique({
+      where: { id: createDto.teacherId },
+      include: { role: true },
+    });
+
+    const assistant = await this.prisma.user.findUnique({
+      where: { id: createDto.assistantId },
+      include: { role: true },
+    });
+
+    if (!teacher) {
+      throw new NotFoundException('教师不存在');
+    }
+
+    if (!assistant) {
+      throw new NotFoundException('助教不存在');
+    }
+
+    // 验证角色：教师和助教
+    if (teacher.role.name !== '教师') {
+      throw new ConflictException('指定用户不是教师角色');
+    }
+
+    if (assistant.role.name !== '助教') {
+      throw new ConflictException('指定用户不是助教角色');
+    }
+
+    // 检查是否已经存在关联
+    const existingRelation = await this.prisma.teacherAssistant.findUnique({
+      where: {
+        teacherId_assistantId: {
+          teacherId: createDto.teacherId,
+          assistantId: createDto.assistantId,
+        },
+      },
+    });
+
+    if (existingRelation) {
+      throw new ConflictException('该教师和助教已经存在关联关系');
+    }
+
+    return this.prisma.teacherAssistant.create({
+      data: createDto,
+      include: {
+        teacher: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        assistant: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+  }
+
+  async getTeacherAssistantRelations() {
+    return this.prisma.teacherAssistant.findMany({
+      include: {
+        teacher: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        assistant: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
+  async getTeachersByAssistant(assistantId: number) {
+    const assistant = await this.prisma.user.findUnique({
+      where: { id: assistantId },
+      include: { role: true },
+    });
+
+    if (!assistant) {
+      throw new NotFoundException('助教不存在');
+    }
+
+    if (assistant.role.name !== '助教') {
+      throw new ConflictException('指定用户不是助教角色');
+    }
+
+    return this.prisma.teacherAssistant.findMany({
+      where: { assistantId },
+      include: {
+        teacher: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+  }
+
+  async getAssistantsByTeacher(teacherId: number) {
+    const teacher = await this.prisma.user.findUnique({
+      where: { id: teacherId },
+      include: { role: true },
+    });
+
+    if (!teacher) {
+      throw new NotFoundException('教师不存在');
+    }
+
+    if (teacher.role.name !== '教师') {
+      throw new ConflictException('指定用户不是教师角色');
+    }
+
+    return this.prisma.teacherAssistant.findMany({
+      where: { teacherId },
+      include: {
+        assistant: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+  }
+
+  async deleteTeacherAssistantRelation(id: number) {
+    const relation = await this.prisma.teacherAssistant.findUnique({
+      where: { id },
+    });
+
+    if (!relation) {
+      throw new NotFoundException('关联关系不存在');
+    }
+
+    return this.prisma.teacherAssistant.delete({
+      where: { id },
+    });
+  }
+
+  async checkAssistantCanAccessTeacherResource(
+    assistantId: number,
+    teacherId: number,
+  ): Promise<boolean> {
+    const relation = await this.prisma.teacherAssistant.findUnique({
+      where: {
+        teacherId_assistantId: {
+          teacherId,
+          assistantId,
+        },
+      },
+    });
+
+    return !!relation;
   }
 }
