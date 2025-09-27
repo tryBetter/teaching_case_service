@@ -25,10 +25,11 @@ import { CreateTeacherAssistantDto } from './dto/create-teacher-assistant.dto';
 import { JwtAuthGuard } from '../auth/auth.guard';
 import { RequirePermissions } from '../auth/decorators/roles.decorator';
 import { Permission } from '../auth/enums/permissions.enum';
+import { RolesGuard } from '../auth/guards/roles.guard';
 
 @ApiTags('角色权限管理')
 @Controller('roles')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth('JWT-auth')
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}

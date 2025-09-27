@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { seedRolePermissions } from './role-permission.seed';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class SeedService {
@@ -9,6 +10,9 @@ export class SeedService {
   async seedDefaultData() {
     // 首先初始化角色权限
     await seedRolePermissions(this.prisma);
+
+    // 创建超级管理员账号
+    await this.createSuperAdmin();
 
     // 创建默认分类
     const categories = [
@@ -210,5 +214,61 @@ export class SeedService {
     }
 
     console.log('默认数据创建完成！');
+  }
+
+  /**
+   * 创建超级管理员账号
+   */
+  private async createSuperAdmin() {
+    const superAdminEmail =
+      process.env.SUPER_ADMIN_EMAIL || 'admin@example.com';
+    const superAdminPassword =
+      process.env.SUPER_ADMIN_PASSWORD || 'SuperAdmin123!';
+    const superAdminName = process.env.SUPER_ADMIN_NAME || '系统超级管理员';
+    const autoCreate = process.env.AUTO_CREATE_SUPER_ADMIN !== 'false'; // 默认创建
+
+    if (!autoCreate) {
+      console.log('跳过超级管理员账号创建');
+      return;
+    }
+
+    // 检查超级管理员是否已存在
+    const existingAdmin = await this.prisma.user.findUnique({
+      where: { email: superAdminEmail },
+    });
+
+    if (existingAdmin) {
+      console.log(`超级管理员账号已存在: ${superAdminEmail}`);
+      return;
+    }
+
+    // 获取超级管理员角色
+    const superAdminRole = await this.prisma.role.findFirst({
+      where: { name: '超级管理员' },
+    });
+
+    if (!superAdminRole) {
+      console.log('超级管理员角色不存在，跳过超级管理员账号创建');
+      return;
+    }
+
+    // 加密密码
+    const hashedPassword = await bcrypt.hash(superAdminPassword, 12);
+
+    // 创建超级管理员用户
+    const superAdmin = await this.prisma.user.create({
+      data: {
+        email: superAdminEmail,
+        name: superAdminName,
+        password: hashedPassword,
+        roleId: superAdminRole.id,
+      },
+      include: {
+        role: true,
+      },
+    });
+
+    console.log(`超级管理员账号创建成功: ${superAdminEmail}`);
+    console.log(`角色: ${superAdmin.role.name}`);
   }
 }
