@@ -57,4 +57,23 @@ export class Comment {
     items: { type: 'object' },
   })
   replies?: any[];
+
+  @ApiProperty({
+    description: '点赞数量',
+    example: 5,
+  })
+  likeCount?: number;
+
+  @ApiProperty({
+    description: '当前用户是否已点赞',
+    example: true,
+  })
+  isLiked?: boolean;
+
+  @ApiProperty({
+    description: '点赞列表',
+    type: 'array',
+    items: { type: 'object' },
+  })
+  likes?: any[];
 }

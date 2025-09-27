@@ -18,6 +18,7 @@ import {
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
+import { LikeCommentDto } from './dto/like-comment.dto';
 import { Public } from '../auth/public.decorator';
 import { CurrentUser } from '../auth/user.decorator';
 import type { AuthenticatedUser } from '../auth/interfaces/user.interface';
@@ -152,19 +153,35 @@ export class CommentController {
             items: { type: 'object' },
             description: '子评论列表',
           },
+          likeCount: {
+            type: 'number',
+            example: 5,
+            description: '点赞数量',
+          },
+          isLiked: {
+            type: 'boolean',
+            example: true,
+            description: '当前用户是否已点赞',
+          },
+          likes: {
+            type: 'array',
+            items: { type: 'object' },
+            description: '点赞列表',
+          },
         },
       },
     },
   })
-  @Public()
   @Get()
   findAll(
     @Query('articleId') articleId?: string,
     @Query('authorId') authorId?: string,
+    @CurrentUser() user?: AuthenticatedUser,
   ) {
     return this.commentService.findAll(
       articleId ? +articleId : undefined,
       authorId ? +authorId : undefined,
+      user?.userId,
     );
   }
 
@@ -223,6 +240,21 @@ export class CommentController {
           items: { type: 'object' },
           description: '子评论列表',
         },
+        likeCount: {
+          type: 'number',
+          example: 5,
+          description: '点赞数量',
+        },
+        isLiked: {
+          type: 'boolean',
+          example: true,
+          description: '当前用户是否已点赞',
+        },
+        likes: {
+          type: 'array',
+          items: { type: 'object' },
+          description: '点赞列表',
+        },
       },
     },
   })
@@ -238,10 +270,9 @@ export class CommentController {
       },
     },
   })
-  @Public()
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.commentService.findOne(+id);
+  findOne(@Param('id') id: string, @CurrentUser() user?: AuthenticatedUser) {
+    return this.commentService.findOne(+id, user?.userId);
   }
 
   @ApiOperation({
@@ -360,5 +391,132 @@ export class CommentController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.commentService.remove(+id);
+  }
+
+  @ApiOperation({
+    summary: '点赞评论',
+    description: '对指定评论进行点赞操作。',
+  })
+  @ApiParam({ name: 'id', description: '评论ID' })
+  @ApiResponse({
+    status: 201,
+    description: '点赞成功',
+    schema: {
+      type: 'object',
+      properties: {
+        userId: { type: 'number', example: 1, description: '用户ID' },
+        commentId: { type: 'number', example: 1, description: '评论ID' },
+        createdAt: {
+          type: 'string',
+          format: 'date-time',
+          example: '2024-01-01T00:00:00.000Z',
+          description: '点赞时间',
+        },
+        user: {
+          type: 'object',
+          properties: {
+            id: { type: 'number', example: 1 },
+            name: { type: 'string', example: '张三' },
+            email: { type: 'string', example: 'zhangsan@example.com' },
+          },
+          description: '用户信息',
+        },
+        comment: {
+          type: 'object',
+          properties: {
+            id: { type: 'number', example: 1 },
+            content: { type: 'string', example: '这是一条很有用的评论！' },
+          },
+          description: '评论信息',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: '请求参数错误',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 400 },
+        message: { type: 'string', example: '已经点赞过该评论' },
+        error: { type: 'string', example: 'Bad Request' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: '评论不存在',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 404 },
+        message: { type: 'string', example: '评论不存在' },
+        error: { type: 'string', example: 'Not Found' },
+      },
+    },
+  })
+  @Post(':id/like')
+  likeComment(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.commentService.likeComment(+id, user.userId);
+  }
+
+  @ApiOperation({
+    summary: '取消点赞评论',
+    description: '取消对指定评论的点赞操作。',
+  })
+  @ApiParam({ name: 'id', description: '评论ID' })
+  @ApiResponse({
+    status: 200,
+    description: '取消点赞成功',
+    schema: {
+      type: 'object',
+      properties: {
+        userId: { type: 'number', example: 1, description: '用户ID' },
+        commentId: { type: 'number', example: 1, description: '评论ID' },
+        createdAt: {
+          type: 'string',
+          format: 'date-time',
+          example: '2024-01-01T00:00:00.000Z',
+          description: '点赞时间',
+        },
+        user: {
+          type: 'object',
+          properties: {
+            id: { type: 'number', example: 1 },
+            name: { type: 'string', example: '张三' },
+            email: { type: 'string', example: 'zhangsan@example.com' },
+          },
+          description: '用户信息',
+        },
+        comment: {
+          type: 'object',
+          properties: {
+            id: { type: 'number', example: 1 },
+            content: { type: 'string', example: '这是一条很有用的评论！' },
+          },
+          description: '评论信息',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: '请求参数错误',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 400 },
+        message: { type: 'string', example: '未点赞该评论' },
+        error: { type: 'string', example: 'Bad Request' },
+      },
+    },
+  })
+  @Delete(':id/like')
+  unlikeComment(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.commentService.unlikeComment(+id, user.userId);
   }
 }

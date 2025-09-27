@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
+import { LikeCommentDto } from './dto/like-comment.dto';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -22,9 +23,10 @@ export class CommentService {
    * 获取所有评论列表，支持按文章ID和作者ID筛选
    * @param articleId 文章ID，可选
    * @param authorId 作者ID，可选
+   * @param currentUserId 当前用户ID，用于判断是否已点赞
    * @returns 评论列表
    */
-  async findAll(articleId?: number, authorId?: number) {
+  async findAll(articleId?: number, authorId?: number, currentUserId?: number) {
     const where: {
       articleId?: number;
       authorId?: number;
@@ -38,7 +40,7 @@ export class CommentService {
       where.authorId = authorId;
     }
 
-    return this.prisma.comment.findMany({
+    const comments = await this.prisma.comment.findMany({
       where,
       include: {
         author: {
@@ -63,6 +65,28 @@ export class CommentService {
                 email: true,
               },
             },
+            likes: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        likes: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
           },
         },
       },
@@ -70,15 +94,49 @@ export class CommentService {
         createdAt: 'desc',
       },
     });
+
+    // 为每个评论添加点赞统计和当前用户点赞状态
+    return Promise.all(
+      comments.map(async (comment) => {
+        const likeCount = comment.likes.length;
+        const isLiked = currentUserId
+          ? await this.isCommentLiked(comment.id, currentUserId)
+          : false;
+
+        // 处理子评论的点赞数据
+        const repliesWithLikes = await Promise.all(
+          comment.replies.map(async (reply) => {
+            const replyLikeCount = reply.likes.length;
+            const isReplyLiked = currentUserId
+              ? await this.isCommentLiked(reply.id, currentUserId)
+              : false;
+
+            return {
+              ...reply,
+              likeCount: replyLikeCount,
+              isLiked: isReplyLiked,
+            };
+          }),
+        );
+
+        return {
+          ...comment,
+          likeCount,
+          isLiked,
+          replies: repliesWithLikes,
+        };
+      }),
+    );
   }
 
   /**
    * 根据ID获取单条评论
    * @param id 评论ID
+   * @param currentUserId 当前用户ID，用于判断是否已点赞
    * @returns 评论详情
    */
-  async findOne(id: number) {
-    return this.prisma.comment.findUnique({
+  async findOne(id: number, currentUserId?: number) {
+    const comment = await this.prisma.comment.findUnique({
       where: { id },
       include: {
         author: {
@@ -103,13 +161,68 @@ export class CommentService {
                 email: true,
               },
             },
+            likes: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                  },
+                },
+              },
+            },
           },
           orderBy: {
             createdAt: 'asc',
           },
         },
+        likes: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
       },
     });
+
+    if (!comment) {
+      return null;
+    }
+
+    // 添加点赞统计和当前用户点赞状态
+    const likeCount = comment.likes.length;
+    const isLiked = currentUserId
+      ? await this.isCommentLiked(comment.id, currentUserId)
+      : false;
+
+    // 处理子评论的点赞数据
+    const repliesWithLikes = await Promise.all(
+      comment.replies.map(async (reply) => {
+        const replyLikeCount = reply.likes.length;
+        const isReplyLiked = currentUserId
+          ? await this.isCommentLiked(reply.id, currentUserId)
+          : false;
+
+        return {
+          ...reply,
+          likeCount: replyLikeCount,
+          isLiked: isReplyLiked,
+        };
+      }),
+    );
+
+    return {
+      ...comment,
+      likeCount,
+      isLiked,
+      replies: repliesWithLikes,
+    };
   }
 
   /**
@@ -182,5 +295,138 @@ export class CommentService {
     });
 
     return comment;
+  }
+
+  /**
+   * 点赞评论
+   * @param commentId 评论ID
+   * @param userId 用户ID
+   * @returns 点赞结果
+   */
+  async likeComment(commentId: number, userId: number) {
+    // 检查评论是否存在
+    const comment = await this.prisma.comment.findUnique({
+      where: { id: commentId },
+    });
+
+    if (!comment) {
+      throw new Error('评论不存在');
+    }
+
+    // 检查是否已经点赞
+    const existingLike = await this.prisma.commentLike.findUnique({
+      where: {
+        userId_commentId: {
+          userId,
+          commentId,
+        },
+      },
+    });
+
+    if (existingLike) {
+      throw new Error('已经点赞过该评论');
+    }
+
+    // 创建点赞记录
+    return this.prisma.commentLike.create({
+      data: {
+        userId,
+        commentId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        comment: {
+          select: {
+            id: true,
+            content: true,
+          },
+        },
+      },
+    });
+  }
+
+  /**
+   * 取消点赞评论
+   * @param commentId 评论ID
+   * @param userId 用户ID
+   * @returns 取消点赞结果
+   */
+  async unlikeComment(commentId: number, userId: number) {
+    // 检查点赞记录是否存在
+    const existingLike = await this.prisma.commentLike.findUnique({
+      where: {
+        userId_commentId: {
+          userId,
+          commentId,
+        },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        comment: {
+          select: {
+            id: true,
+            content: true,
+          },
+        },
+      },
+    });
+
+    if (!existingLike) {
+      throw new Error('未点赞该评论');
+    }
+
+    // 删除点赞记录
+    await this.prisma.commentLike.delete({
+      where: {
+        userId_commentId: {
+          userId,
+          commentId,
+        },
+      },
+    });
+
+    return existingLike;
+  }
+
+  /**
+   * 检查用户是否已点赞评论
+   * @param commentId 评论ID
+   * @param userId 用户ID
+   * @returns 是否已点赞
+   */
+  async isCommentLiked(commentId: number, userId: number): Promise<boolean> {
+    const like = await this.prisma.commentLike.findUnique({
+      where: {
+        userId_commentId: {
+          userId,
+          commentId,
+        },
+      },
+    });
+
+    return !!like;
+  }
+
+  /**
+   * 获取评论的点赞数量
+   * @param commentId 评论ID
+   * @returns 点赞数量
+   */
+  async getCommentLikeCount(commentId: number): Promise<number> {
+    return this.prisma.commentLike.count({
+      where: { commentId },
+    });
   }
 }
