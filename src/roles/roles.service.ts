@@ -577,6 +577,13 @@ export class RolesService {
         isActive: true,
       },
       {
+        name: '教师组长',
+        description:
+          '教师组长角色，拥有教师所有权限，可管理所有教师的案例和资源',
+        isSystem: true,
+        isActive: true,
+      },
+      {
         name: '教师',
         description: '教师角色，拥有教学相关权限',
         isSystem: true,

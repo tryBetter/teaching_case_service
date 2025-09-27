@@ -44,6 +44,11 @@ export const RequirePermissions = (
 export const RequireAdmin = () => Roles(UserRole.ADMIN);
 
 /**
+ * 教师组长角色装饰器
+ */
+export const RequireTeacherLeader = () => Roles(UserRole.TEACHER_LEADER);
+
+/**
  * 教师角色装饰器
  */
 export const RequireTeacher = () => Roles(UserRole.TEACHER);
@@ -59,10 +64,22 @@ export const RequireAssistant = () => Roles(UserRole.ASSISTANT);
 export const RequireStudent = () => Roles(UserRole.STUDENT);
 
 /**
+ * 管理员或教师组长角色装饰器
+ */
+export const RequireAdminOrTeacherLeader = () =>
+  Roles(UserRole.ADMIN, UserRole.TEACHER_LEADER);
+
+/**
  * 管理员或教师角色装饰器
  */
 export const RequireAdminOrTeacher = () =>
   Roles(UserRole.ADMIN, UserRole.TEACHER);
+
+/**
+ * 教师组长或教师角色装饰器
+ */
+export const RequireTeacherLeaderOrTeacher = () =>
+  Roles(UserRole.TEACHER_LEADER, UserRole.TEACHER);
 
 /**
  * 教师或助教角色装饰器
@@ -71,7 +88,19 @@ export const RequireTeacherOrAssistant = () =>
   Roles(UserRole.TEACHER, UserRole.ASSISTANT);
 
 /**
+ * 教师组长、教师或助教角色装饰器
+ */
+export const RequireTeacherLeaderOrTeacherOrAssistant = () =>
+  Roles(UserRole.TEACHER_LEADER, UserRole.TEACHER, UserRole.ASSISTANT);
+
+/**
  * 所有角色装饰器
  */
 export const RequireAnyRole = () =>
-  Roles(UserRole.ADMIN, UserRole.TEACHER, UserRole.ASSISTANT, UserRole.STUDENT);
+  Roles(
+    UserRole.ADMIN,
+    UserRole.TEACHER_LEADER,
+    UserRole.TEACHER,
+    UserRole.ASSISTANT,
+    UserRole.STUDENT,
+  );

@@ -26,6 +26,7 @@ import type { AuthenticatedUser } from '../auth/interfaces/user.interface';
 import {
   RequirePermissions,
   RequireTeacherOrAssistant,
+  RequireTeacherLeaderOrTeacherOrAssistant,
 } from '../auth/decorators/roles.decorator';
 import { Permission } from '../auth/enums/permissions.enum';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -39,8 +40,11 @@ export class ArticlesController {
   @ApiOperation({ summary: '创建文章' })
   @ApiResponse({ status: 201, description: '文章创建成功' })
   @ApiResponse({ status: 400, description: '请求参数错误' })
-  @ApiResponse({ status: 403, description: '权限不足，需要教师或助教角色' })
-  @RequireTeacherOrAssistant()
+  @ApiResponse({
+    status: 403,
+    description: '权限不足，需要教师组长、教师或助教角色',
+  })
+  @RequireTeacherLeaderOrTeacherOrAssistant()
   @Post()
   create(
     @Body() createArticleDto: CreateArticleDto,
@@ -135,6 +139,11 @@ export class ArticlesController {
   })
   @ApiResponse({ status: 200, description: '文章发布成功' })
   @ApiResponse({ status: 404, description: '文章不存在' })
+  @ApiResponse({
+    status: 403,
+    description: '权限不足，需要教师组长、教师或助教角色',
+  })
+  @RequireTeacherLeaderOrTeacherOrAssistant()
   @Post('publish')
   publish(@Body('id') id: string) {
     return this.articlesService.publish(+id);
@@ -144,6 +153,11 @@ export class ArticlesController {
   @ApiParam({ name: 'id', description: '文章ID' })
   @ApiResponse({ status: 200, description: '文章更新成功' })
   @ApiResponse({ status: 404, description: '文章不存在' })
+  @ApiResponse({
+    status: 403,
+    description: '权限不足，需要教师组长、教师或助教角色',
+  })
+  @RequireTeacherLeaderOrTeacherOrAssistant()
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateArticleDto: UpdateArticleDto) {
     return this.articlesService.update(+id, updateArticleDto);
@@ -153,7 +167,7 @@ export class ArticlesController {
   @ApiParam({ name: 'id', description: '文章ID' })
   @ApiResponse({ status: 200, description: '文章删除成功' })
   @ApiResponse({ status: 404, description: '文章不存在' })
-  @ApiResponse({ status: 403, description: '权限不足，需要教师角色' })
+  @ApiResponse({ status: 403, description: '权限不足，需要教师组长或教师角色' })
   @RequirePermissions([Permission.ARTICLE_DELETE])
   @Delete(':id')
   remove(@Param('id') id: string) {

@@ -27,15 +27,30 @@ import { UpdateMediaDto } from './dto/update-media.dto';
 import { UploadMediaDto } from './dto/upload-media.dto';
 import type { UploadedFile as UploadedFileInterface } from './interfaces/uploaded-file.interface';
 import { Public } from '../auth/public.decorator';
+import { CurrentUser } from '../auth/user.decorator';
+import type { AuthenticatedUser } from '../auth/interfaces/user.interface';
+import {
+  RequirePermissions,
+  RequireTeacherLeaderOrTeacherOrAssistant,
+} from '../auth/decorators/roles.decorator';
+import { Permission } from '../auth/enums/permissions.enum';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { UseGuards } from '@nestjs/common';
 
 @ApiTags('媒体管理')
 @Controller('media')
+@UseGuards(RolesGuard)
 export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
 
   @ApiOperation({ summary: '创建媒体文件' })
   @ApiResponse({ status: 201, description: '媒体文件创建成功' })
   @ApiResponse({ status: 400, description: '请求参数错误' })
+  @ApiResponse({
+    status: 403,
+    description: '权限不足，需要教师组长、教师或助教角色',
+  })
+  @RequireTeacherLeaderOrTeacherOrAssistant()
   @Post()
   create(@Body() createMediaDto: CreateMediaDto) {
     return this.mediaService.create(createMediaDto);
@@ -153,6 +168,11 @@ export class MediaController {
       },
     },
   })
+  @ApiResponse({
+    status: 403,
+    description: '权限不足，需要教师组长、教师或助教角色',
+  })
+  @RequireTeacherLeaderOrTeacherOrAssistant()
   @UseInterceptors(FileInterceptor('file'))
   @Post('upload')
   async uploadFile(
@@ -229,6 +249,11 @@ export class MediaController {
   @ApiResponse({ status: 200, description: '媒体文件更新成功' })
   @ApiResponse({ status: 404, description: '媒体文件不存在' })
   @ApiResponse({ status: 400, description: '请求参数错误' })
+  @ApiResponse({
+    status: 403,
+    description: '权限不足，需要教师组长、教师或助教角色',
+  })
+  @RequireTeacherLeaderOrTeacherOrAssistant()
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateMediaDto: UpdateMediaDto) {
     return this.mediaService.update(+id, updateMediaDto);
@@ -238,6 +263,8 @@ export class MediaController {
   @ApiParam({ name: 'id', description: '媒体文件ID' })
   @ApiResponse({ status: 200, description: '媒体文件删除成功' })
   @ApiResponse({ status: 404, description: '媒体文件不存在' })
+  @ApiResponse({ status: 403, description: '权限不足，需要教师组长或教师角色' })
+  @RequirePermissions([Permission.MEDIA_DELETE])
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.mediaService.remove(+id);
