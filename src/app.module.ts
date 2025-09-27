@@ -14,6 +14,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { FilterConditionsModule } from './filter-conditions/filter-conditions.module';
 import { HotSearchModule } from './hot-search/hot-search.module';
 import { RolesModule } from './roles/roles.module';
+import { StatsModule } from './stats/stats.module';
 import { JwtAuthGuard } from './auth/auth.guard';
 
 @Module({
@@ -30,6 +31,7 @@ import { JwtAuthGuard } from './auth/auth.guard';
     CategoriesModule,
     FilterConditionsModule,
     HotSearchModule,
+    StatsModule,
   ],
   controllers: [AppController],
   providers: [
