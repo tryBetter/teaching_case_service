@@ -590,6 +590,12 @@ export class RolesService {
         isActive: true,
       },
       {
+        name: '助教组长',
+        description: '助教组长角色，拥有助教所有权限，默认关联所有教师',
+        isSystem: true,
+        isActive: true,
+      },
+      {
         name: '助教',
         description: '助教角色，拥有辅助教学权限',
         isSystem: true,
@@ -794,6 +800,22 @@ export class RolesService {
     assistantId: number,
     teacherId: number,
   ): Promise<boolean> {
+    // 检查用户是否为助教组长
+    const assistant = await this.prisma.user.findUnique({
+      where: { id: assistantId },
+      include: { role: true },
+    });
+
+    if (!assistant) {
+      return false;
+    }
+
+    // 如果是助教组长，可以访问所有教师的资源
+    if (assistant.role.name === '助教组长') {
+      return true;
+    }
+
+    // 如果是普通助教，检查是否有明确的关联关系
     const relation = await this.prisma.teacherAssistant.findUnique({
       where: {
         teacherId_assistantId: {

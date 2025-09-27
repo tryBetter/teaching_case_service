@@ -31,7 +31,8 @@ import { CurrentUser } from '../auth/user.decorator';
 import type { AuthenticatedUser } from '../auth/interfaces/user.interface';
 import {
   RequirePermissions,
-  RequireTeacherLeaderOrTeacherOrAssistant,
+  RequireTeacherLeaderOrTeacher,
+  RequireTeacherLeaderOrTeacherOrAssistantLeaderOrAssistant,
 } from '../auth/decorators/roles.decorator';
 import { Permission } from '../auth/enums/permissions.enum';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -48,9 +49,9 @@ export class MediaController {
   @ApiResponse({ status: 400, description: '请求参数错误' })
   @ApiResponse({
     status: 403,
-    description: '权限不足，需要教师组长、教师或助教角色',
+    description: '权限不足，需要教师组长或教师角色',
   })
-  @RequireTeacherLeaderOrTeacherOrAssistant()
+  @RequireTeacherLeaderOrTeacher()
   @Post()
   create(@Body() createMediaDto: CreateMediaDto) {
     return this.mediaService.create(createMediaDto);
@@ -170,9 +171,9 @@ export class MediaController {
   })
   @ApiResponse({
     status: 403,
-    description: '权限不足，需要教师组长、教师或助教角色',
+    description: '权限不足，需要教师组长或教师角色',
   })
-  @RequireTeacherLeaderOrTeacherOrAssistant()
+  @RequireTeacherLeaderOrTeacher()
   @UseInterceptors(FileInterceptor('file'))
   @Post('upload')
   async uploadFile(
@@ -251,9 +252,9 @@ export class MediaController {
   @ApiResponse({ status: 400, description: '请求参数错误' })
   @ApiResponse({
     status: 403,
-    description: '权限不足，需要教师组长、教师或助教角色',
+    description: '权限不足，需要教师组长、教师、助教组长或助教角色',
   })
-  @RequireTeacherLeaderOrTeacherOrAssistant()
+  @RequireTeacherLeaderOrTeacherOrAssistantLeaderOrAssistant()
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateMediaDto: UpdateMediaDto) {
     return this.mediaService.update(+id, updateMediaDto);

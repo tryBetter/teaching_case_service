@@ -54,6 +54,11 @@ export const RequireTeacherLeader = () => Roles(UserRole.TEACHER_LEADER);
 export const RequireTeacher = () => Roles(UserRole.TEACHER);
 
 /**
+ * 助教组长角色装饰器
+ */
+export const RequireAssistantLeader = () => Roles(UserRole.ASSISTANT_LEADER);
+
+/**
  * 助教角色装饰器
  */
 export const RequireAssistant = () => Roles(UserRole.ASSISTANT);
@@ -88,10 +93,21 @@ export const RequireTeacherOrAssistant = () =>
   Roles(UserRole.TEACHER, UserRole.ASSISTANT);
 
 /**
- * 教师组长、教师或助教角色装饰器
+ * 教师组长、教师、助教组长或助教角色装饰器
  */
-export const RequireTeacherLeaderOrTeacherOrAssistant = () =>
-  Roles(UserRole.TEACHER_LEADER, UserRole.TEACHER, UserRole.ASSISTANT);
+export const RequireTeacherLeaderOrTeacherOrAssistantLeaderOrAssistant = () =>
+  Roles(
+    UserRole.TEACHER_LEADER,
+    UserRole.TEACHER,
+    UserRole.ASSISTANT_LEADER,
+    UserRole.ASSISTANT,
+  );
+
+/**
+ * 助教组长或助教角色装饰器
+ */
+export const RequireAssistantLeaderOrAssistant = () =>
+  Roles(UserRole.ASSISTANT_LEADER, UserRole.ASSISTANT);
 
 /**
  * 所有角色装饰器
@@ -101,6 +117,7 @@ export const RequireAnyRole = () =>
     UserRole.ADMIN,
     UserRole.TEACHER_LEADER,
     UserRole.TEACHER,
+    UserRole.ASSISTANT_LEADER,
     UserRole.ASSISTANT,
     UserRole.STUDENT,
   );

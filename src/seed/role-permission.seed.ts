@@ -281,6 +281,12 @@ export async function seedRolePermissions(prisma: PrismaService) {
       isActive: true,
     },
     {
+      name: '助教组长',
+      description: '助教组长角色，拥有助教所有权限，默认关联所有教师',
+      isSystem: true,
+      isActive: true,
+    },
+    {
       name: '助教',
       description: '助教角色，拥有辅助教学权限',
       isSystem: true,
@@ -404,10 +410,37 @@ export async function seedRolePermissions(prisma: PrismaService) {
       'note:delete',
       'note:list',
     ],
+    助教组长: [
+      'user:read',
+      'user:list',
+      // 注意：助教组长不能创建文章（article:create）
+      'article:read',
+      'article:update',
+      'article:list',
+      // 注意：助教组长不能发布文章（article:publish）
+      // 注意：助教组长不能上传媒体（media:upload）
+      'media:read',
+      'media:list',
+      // 注意：助教组长不能删除媒体（media:delete）
+      'comment:create',
+      'comment:read',
+      'comment:update',
+      'comment:delete',
+      'comment:list',
+      'favorite:create',
+      'favorite:read',
+      'favorite:delete',
+      'favorite:list',
+      'note:create',
+      'note:read',
+      'note:update',
+      'note:delete',
+      'note:list',
+    ],
     助教: [
       'user:read',
       'user:list',
-      'article:create',
+      // 注意：助教不能创建文章（article:create）
       'article:read',
       'article:update',
       'article:list',

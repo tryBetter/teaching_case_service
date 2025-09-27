@@ -26,7 +26,8 @@ import type { AuthenticatedUser } from '../auth/interfaces/user.interface';
 import {
   RequirePermissions,
   RequireTeacherOrAssistant,
-  RequireTeacherLeaderOrTeacherOrAssistant,
+  RequireTeacherLeaderOrTeacher,
+  RequireTeacherLeaderOrTeacherOrAssistantLeaderOrAssistant,
 } from '../auth/decorators/roles.decorator';
 import { Permission } from '../auth/enums/permissions.enum';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -42,9 +43,9 @@ export class ArticlesController {
   @ApiResponse({ status: 400, description: '请求参数错误' })
   @ApiResponse({
     status: 403,
-    description: '权限不足，需要教师组长、教师或助教角色',
+    description: '权限不足，需要教师组长或教师角色',
   })
-  @RequireTeacherLeaderOrTeacherOrAssistant()
+  @RequireTeacherLeaderOrTeacher()
   @Post()
   create(
     @Body() createArticleDto: CreateArticleDto,
@@ -141,9 +142,9 @@ export class ArticlesController {
   @ApiResponse({ status: 404, description: '文章不存在' })
   @ApiResponse({
     status: 403,
-    description: '权限不足，需要教师组长、教师或助教角色',
+    description: '权限不足，需要教师组长或教师角色',
   })
-  @RequireTeacherLeaderOrTeacherOrAssistant()
+  @RequireTeacherLeaderOrTeacher()
   @Post('publish')
   publish(@Body('id') id: string) {
     return this.articlesService.publish(+id);
@@ -155,9 +156,9 @@ export class ArticlesController {
   @ApiResponse({ status: 404, description: '文章不存在' })
   @ApiResponse({
     status: 403,
-    description: '权限不足，需要教师组长、教师或助教角色',
+    description: '权限不足，需要教师组长、教师、助教组长或助教角色',
   })
-  @RequireTeacherLeaderOrTeacherOrAssistant()
+  @RequireTeacherLeaderOrTeacherOrAssistantLeaderOrAssistant()
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateArticleDto: UpdateArticleDto) {
     return this.articlesService.update(+id, updateArticleDto);

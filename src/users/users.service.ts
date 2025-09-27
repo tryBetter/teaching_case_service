@@ -40,7 +40,7 @@ export class UsersService {
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
     // 创建用户
-    return this.prisma.user.create({
+    const user = await this.prisma.user.create({
       data: {
         email: createUserDto.email,
         name: createUserDto.name,
@@ -51,6 +51,13 @@ export class UsersService {
         role: true,
       },
     });
+
+    // 如果创建的是教师，自动关联所有助教组长
+    if (user.role.name === '教师') {
+      await this.associateTeacherWithAssistantLeaders(user.id);
+    }
+
+    return user;
   }
 
   findAll() {
@@ -181,5 +188,33 @@ export class UsersService {
     }
 
     return result;
+  }
+
+  /**
+   * 将教师与所有助教组长关联
+   * @param teacherId 教师ID
+   */
+  private async associateTeacherWithAssistantLeaders(teacherId: number) {
+    // 查找所有助教组长
+    const assistantLeaders = await this.prisma.user.findMany({
+      where: {
+        role: {
+          name: '助教组长',
+        },
+      },
+    });
+
+    // 为每个助教组长创建与教师的关联关系
+    const relations = assistantLeaders.map((assistantLeader) => ({
+      teacherId,
+      assistantId: assistantLeader.id,
+    }));
+
+    if (relations.length > 0) {
+      await this.prisma.teacherAssistant.createMany({
+        data: relations,
+        skipDuplicates: true, // 跳过已存在的关联
+      });
+    }
   }
 }
