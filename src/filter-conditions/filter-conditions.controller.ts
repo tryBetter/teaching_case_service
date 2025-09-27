@@ -16,6 +16,7 @@ import {
   ApiResponse,
   ApiBody,
   ApiQuery,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { FilterConditionTypesService } from './filter-condition-types.service';
 import { FilterConditionsService } from './filter-conditions.service';
@@ -31,6 +32,7 @@ import {
 import { RolesGuard } from '../auth/guards/roles.guard';
 
 @ApiTags('筛选条件管理')
+@ApiBearerAuth('JWT-auth')
 @Controller('filter-conditions')
 @UseGuards(RolesGuard)
 export class FilterConditionsController {

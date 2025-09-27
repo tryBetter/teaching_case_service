@@ -16,6 +16,7 @@ import {
   ApiParam,
   ApiBody,
   ApiResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { ArticlesService } from './articles.service';
 import { CreateArticleDto } from './dto/create-article.dto';
@@ -33,6 +34,7 @@ import { Permission } from '../auth/enums/permissions.enum';
 import { RolesGuard } from '../auth/guards/roles.guard';
 
 @ApiTags('文章管理')
+@ApiBearerAuth('JWT-auth')
 @Controller('articles')
 @UseGuards(RolesGuard)
 export class ArticlesController {

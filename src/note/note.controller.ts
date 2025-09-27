@@ -14,6 +14,7 @@ import {
   ApiParam,
   ApiResponse,
   ApiQuery,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { NoteService } from './note.service';
 import { CreateNoteDto } from './dto/create-note.dto';
@@ -23,6 +24,7 @@ import type { AuthenticatedUser } from '../auth/interfaces/user.interface';
 import { Public } from '../auth/public.decorator';
 
 @ApiTags('笔记管理')
+@ApiBearerAuth('JWT-auth')
 @Controller('note')
 export class NoteController {
   constructor(private readonly noteService: NoteService) {}

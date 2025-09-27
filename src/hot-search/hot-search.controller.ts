@@ -14,6 +14,7 @@ import {
   ApiParam,
   ApiResponse,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { HotSearchService } from './hot-search.service';
 import { CreateHotSearchDto } from './dto/create-hot-search.dto';
@@ -24,6 +25,7 @@ import { RequireAdmin } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 
 @ApiTags('热搜词条管理')
+@ApiBearerAuth('JWT-auth')
 @Controller('hot-search')
 @UseGuards(RolesGuard)
 export class HotSearchController {

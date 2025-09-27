@@ -20,6 +20,7 @@ import {
   ApiQuery,
   ApiConsumes,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { MediaService } from './media.service';
 import { CreateMediaDto } from './dto/create-media.dto';
@@ -39,6 +40,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { UseGuards } from '@nestjs/common';
 
 @ApiTags('媒体管理')
+@ApiBearerAuth('JWT-auth')
 @Controller('media')
 @UseGuards(RolesGuard)
 export class MediaController {

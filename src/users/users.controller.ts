@@ -17,6 +17,7 @@ import {
   ApiResponse,
   ApiConsumes,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
@@ -34,6 +35,7 @@ import { UseGuards } from '@nestjs/common';
 import { RolesGuard } from '../auth/guards/roles.guard';
 
 @ApiTags('用户管理')
+@ApiBearerAuth('JWT-auth')
 @Controller('users')
 @UseGuards(RolesGuard)
 export class UsersController {

@@ -14,6 +14,7 @@ import {
   ApiParam,
   ApiResponse,
   ApiQuery,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -24,6 +25,7 @@ import { CurrentUser } from '../auth/user.decorator';
 import type { AuthenticatedUser } from '../auth/interfaces/user.interface';
 
 @ApiTags('评论管理')
+@ApiBearerAuth('JWT-auth')
 @Controller('comment')
 export class CommentController {
   constructor(private readonly commentService: CommentService) {}

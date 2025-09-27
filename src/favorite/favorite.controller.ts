@@ -1,5 +1,11 @@
 import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { FavoriteService } from './favorite.service';
 import { CreateFavoriteDto } from './dto/create-favorite.dto';
 import { CurrentUser } from '../auth/user.decorator';
@@ -7,6 +13,7 @@ import type { AuthenticatedUser } from '../auth/interfaces/user.interface';
 import { Public } from '../auth/public.decorator';
 
 @ApiTags('收藏管理')
+@ApiBearerAuth('JWT-auth')
 @Controller('favorite')
 export class FavoriteController {
   constructor(private readonly favoriteService: FavoriteService) {}

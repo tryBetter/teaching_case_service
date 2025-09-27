@@ -14,6 +14,7 @@ import {
   ApiParam,
   ApiResponse,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -26,6 +27,7 @@ import {
 import { RolesGuard } from '../auth/guards/roles.guard';
 
 @ApiTags('分类管理')
+@ApiBearerAuth('JWT-auth')
 @Controller('categories')
 @UseGuards(RolesGuard)
 export class CategoriesController {
