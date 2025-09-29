@@ -25,6 +25,27 @@ async function checkData() {
       console.log(`   - ${role?.name || '未知角色'}: ${userGroup._count} 个`);
     }
 
+    // 显示超级管理员用户详细信息
+    const superAdmins = await prisma.user.findMany({
+      where: {
+        role: {
+          name: '超级管理员',
+        },
+      },
+      include: {
+        role: true,
+      },
+    });
+
+    console.log('\n🔐 超级管理员用户详情:');
+    for (const admin of superAdmins) {
+      console.log(`   - 邮箱: ${admin.email}`);
+      console.log(`   - 姓名: ${admin.name}`);
+      console.log(`   - 角色: ${admin.role.name}`);
+      console.log(`   - 密码哈希: ${admin.password.substring(0, 20)}...`);
+      console.log('   ---');
+    }
+
     // 统计文章数据
     const articleCount = await prisma.article.count();
     const publishedCount = await prisma.article.count({

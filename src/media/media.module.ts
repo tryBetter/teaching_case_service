@@ -8,5 +8,6 @@ import { RolesModule } from '../roles/roles.module';
   imports: [PrismaModule, RolesModule],
   controllers: [MediaController],
   providers: [MediaService],
+  exports: [MediaService],
 })
 export class MediaModule {}

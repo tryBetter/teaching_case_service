@@ -29,6 +29,12 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
 
+  // 配置后台管理系统静态文件服务
+  app.useStaticAssets(join(__dirname, '..', 'src', 'admin', 'frontend'), {
+    prefix: '/admin/',
+    index: 'index.html',
+  });
+
   // 配置 Swagger
   const config = new DocumentBuilder()
     .setTitle('Teaching Case Service API')

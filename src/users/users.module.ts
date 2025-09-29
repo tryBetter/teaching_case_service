@@ -9,5 +9,6 @@ import { RolesModule } from '../roles/roles.module';
   imports: [PrismaModule, RolesModule],
   controllers: [UsersController],
   providers: [UsersService, ExcelService],
+  exports: [UsersService, ExcelService],
 })
 export class UsersModule {}

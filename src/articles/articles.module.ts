@@ -7,5 +7,6 @@ import { RolesModule } from '../roles/roles.module';
   imports: [RolesModule],
   controllers: [ArticlesController],
   providers: [ArticlesService],
+  exports: [ArticlesService],
 })
 export class ArticlesModule {}
