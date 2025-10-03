@@ -71,10 +71,12 @@ model Article {
 }
 
 model Media {
-  id        Int      @id @default(autoincrement())
-  type      MediaType
-  url       String
-  createdAt DateTime @default(now())
+  id           Int      @id @default(autoincrement())
+  type         MediaType
+  url          String
+  originalName String?  // 原始文件名
+  size         Int?     // 文件大小（字节）
+  createdAt    DateTime @default(now())
 
   // 多对多关系：一个媒体文件可以关联多个文章
   articles  ArticleMedia[]

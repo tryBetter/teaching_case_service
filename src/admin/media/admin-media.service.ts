@@ -63,7 +63,10 @@ export class AdminMediaService {
 
     return {
       id: media.id,
-      originalName: media.url.split('/').pop() || '未知文件',
+      originalName:
+        media.originalName ||
+        (media.url ? media.url.split('/').pop() : '未知文件') ||
+        '未知文件',
       message: '媒体文件删除成功',
     };
   }

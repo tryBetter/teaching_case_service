@@ -14,7 +14,10 @@ export class AdminFavoriteService {
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
-        include: {
+        select: {
+          userId: true,
+          articleId: true,
+          createdAt: true,
           user: {
             select: {
               id: true,
@@ -47,11 +50,11 @@ export class AdminFavoriteService {
 
   async remove(userId: number, articleId: number) {
     const favorite = await this.prisma.favorite.findUnique({
-      where: { 
+      where: {
         userId_articleId: {
           userId,
-          articleId
-        }
+          articleId,
+        },
       },
     });
 
@@ -60,11 +63,11 @@ export class AdminFavoriteService {
     }
 
     await this.prisma.favorite.delete({
-      where: { 
+      where: {
         userId_articleId: {
           userId,
-          articleId
-        }
+          articleId,
+        },
       },
     });
 

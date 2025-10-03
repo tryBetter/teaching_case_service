@@ -365,6 +365,51 @@
 
             <div class="card">
               <div class="card-body">
+                <!-- 搜索和筛选区域 -->
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <div class="input-group">
+                      <input
+                        type="text"
+                        id="userSearchInput"
+                        class="form-control"
+                        placeholder="搜索用户（姓名或邮箱）"
+                      />
+                      <button
+                        class="btn btn-outline-secondary"
+                        type="button"
+                        onclick="searchUsers()"
+                      >
+                        <i class="bi bi-search"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <select
+                      id="userRoleFilter"
+                      class="form-select"
+                      onchange="filterUsers()"
+                    >
+                      <option value="">所有角色</option>
+                      <option value="超级管理员">超级管理员</option>
+                      <option value="教师">教师</option>
+                      <option value="助教">助教</option>
+                      <option value="助教组长">助教组长</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <select
+                      id="userPageSize"
+                      class="form-select"
+                      onchange="changePageSize()"
+                    >
+                      <option value="10">每页10条</option>
+                      <option value="20">每页20条</option>
+                      <option value="50">每页50条</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div class="table-responsive">
                   <table class="table table-hover">
                     <thead>
@@ -388,6 +433,23 @@
                     </tbody>
                   </table>
                 </div>
+
+                <!-- 分页组件 -->
+                <nav aria-label="用户列表分页">
+                  <ul
+                    id="usersPagination"
+                    class="pagination justify-content-center"
+                  >
+                    <!-- 分页按钮将通过JavaScript动态生成 -->
+                  </ul>
+                </nav>
+
+                <!-- 分页信息 -->
+                <div class="d-flex justify-content-between align-items-center">
+                  <div id="usersPaginationInfo" class="text-muted">
+                    <!-- 分页信息将通过JavaScript动态生成 -->
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -406,6 +468,69 @@
 
             <div class="card">
               <div class="card-body">
+                <!-- 搜索和筛选区域 -->
+                <div class="row mb-3">
+                  <div class="col-md-4">
+                    <div class="input-group">
+                      <input
+                        type="text"
+                        id="articleSearchInput"
+                        class="form-control"
+                        placeholder="搜索文章（标题或内容）"
+                      />
+                      <button
+                        class="btn btn-outline-secondary"
+                        type="button"
+                        onclick="searchArticles()"
+                      >
+                        <i class="bi bi-search"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <select
+                      id="articleStatusFilter"
+                      class="form-select"
+                      onchange="filterArticles()"
+                    >
+                      <option value="">所有状态</option>
+                      <option value="true">已发布</option>
+                      <option value="false">草稿</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <select
+                      id="articleCategoryFilter"
+                      class="form-select"
+                      onchange="filterArticles()"
+                    >
+                      <option value="">所有分类</option>
+                      <!-- 分类选项将通过JavaScript动态加载 -->
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <select
+                      id="articleAuthorFilter"
+                      class="form-select"
+                      onchange="filterArticles()"
+                    >
+                      <option value="">所有作者</option>
+                      <!-- 作者选项将通过JavaScript动态加载 -->
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <select
+                      id="articlePageSize"
+                      class="form-select"
+                      onchange="changeArticlePageSize()"
+                    >
+                      <option value="10">每页10条</option>
+                      <option value="20">每页20条</option>
+                      <option value="50">每页50条</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div class="table-responsive">
                   <table class="table table-hover">
                     <thead>
@@ -429,6 +554,23 @@
                       </tr>
                     </tbody>
                   </table>
+                </div>
+
+                <!-- 分页组件 -->
+                <nav aria-label="文章列表分页">
+                  <ul
+                    id="articlesPagination"
+                    class="pagination justify-content-center"
+                  >
+                    <!-- 分页按钮将通过JavaScript动态生成 -->
+                  </ul>
+                </nav>
+
+                <!-- 分页信息 -->
+                <div class="d-flex justify-content-between align-items-center">
+                  <div id="articlesPaginationInfo" class="text-muted">
+                    <!-- 分页信息将通过JavaScript动态生成 -->
+                  </div>
                 </div>
               </div>
             </div>

@@ -6,20 +6,6 @@ const API_BASE_URL = window.location.origin;
 // 初始化
 document.addEventListener('DOMContentLoaded', function () {
   console.log('页面加载完成，开始检查认证状态');
-
-  // 添加调试按钮（临时）
-  const debugButton = document.createElement('button');
-  debugButton.textContent = '测试隐藏登录表单';
-  debugButton.style.position = 'fixed';
-  debugButton.style.top = '10px';
-  debugButton.style.right = '10px';
-  debugButton.style.zIndex = '9999';
-  debugButton.onclick = function () {
-    console.log('手动测试隐藏登录表单');
-    showAdminInterface();
-  };
-  document.body.appendChild(debugButton);
-
   checkAuthStatus();
 });
 
@@ -275,10 +261,38 @@ async function loadDashboard() {
   }
 }
 
+// 用户管理分页相关变量
+let currentUserPage = 1;
+let currentUserPageSize = 10;
+let currentUserSearch = '';
+let currentUserRole = '';
+
+// 文章管理分页相关变量
+let currentArticlePage = 1;
+let currentArticlePageSize = 10;
+let currentArticleSearch = '';
+let currentArticleStatus = '';
+let currentArticleCategory = '';
+let currentArticleAuthor = '';
+
 // 加载用户列表
-async function loadUsers() {
+async function loadUsers(page = 1, pageSize = 10, search = '', role = '') {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/users`, {
+    // 构建查询参数
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: pageSize.toString(),
+    });
+
+    if (search) {
+      params.append('search', search);
+    }
+
+    if (role) {
+      params.append('role', role);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/admin/users?${params}`, {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -287,6 +301,12 @@ async function loadUsers() {
     if (response.ok) {
       const data = await response.json();
       const tbody = document.getElementById('usersTableBody');
+
+      // 更新当前分页状态
+      currentUserPage = page;
+      currentUserPageSize = pageSize;
+      currentUserSearch = search;
+      currentUserRole = role;
 
       if (data.data && data.data.length > 0) {
         tbody.innerHTML = data.data
@@ -310,9 +330,15 @@ async function loadUsers() {
                 `,
           )
           .join('');
+
+        // 更新分页组件
+        updateUsersPagination(data.pagination);
       } else {
         tbody.innerHTML =
           '<tr><td colspan="6" class="text-center text-muted">暂无数据</td></tr>';
+        // 清空分页组件
+        document.getElementById('usersPagination').innerHTML = '';
+        document.getElementById('usersPaginationInfo').innerHTML = '';
       }
     }
   } catch (error) {
@@ -322,10 +348,336 @@ async function loadUsers() {
   }
 }
 
-// 加载文章列表
-async function loadArticles() {
+// 更新用户分页组件
+function updateUsersPagination(pagination) {
+  const { page, limit, total, totalPages } = pagination;
+  const paginationContainer = document.getElementById('usersPagination');
+  const paginationInfo = document.getElementById('usersPaginationInfo');
+
+  // 更新分页信息
+  const startItem = (page - 1) * limit + 1;
+  const endItem = Math.min(page * limit, total);
+  paginationInfo.innerHTML = `显示第 ${startItem}-${endItem} 条，共 ${total} 条记录`;
+
+  // 生成分页按钮
+  let paginationHTML = '';
+
+  // 上一页按钮
+  if (page > 1) {
+    paginationHTML += `
+      <li class="page-item">
+        <a class="page-link" href="#" onclick="goToUserPage(${page - 1})">上一页</a>
+      </li>
+    `;
+  }
+
+  // 页码按钮
+  const startPage = Math.max(1, page - 2);
+  const endPage = Math.min(totalPages, page + 2);
+
+  if (startPage > 1) {
+    paginationHTML += `
+      <li class="page-item">
+        <a class="page-link" href="#" onclick="goToUserPage(1)">1</a>
+      </li>
+    `;
+    if (startPage > 2) {
+      paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+    }
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    const isActive = i === page ? 'active' : '';
+    paginationHTML += `
+      <li class="page-item ${isActive}">
+        <a class="page-link" href="#" onclick="goToUserPage(${i})">${i}</a>
+      </li>
+    `;
+  }
+
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1) {
+      paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+    }
+    paginationHTML += `
+      <li class="page-item">
+        <a class="page-link" href="#" onclick="goToUserPage(${totalPages})">${totalPages}</a>
+      </li>
+    `;
+  }
+
+  // 下一页按钮
+  if (page < totalPages) {
+    paginationHTML += `
+      <li class="page-item">
+        <a class="page-link" href="#" onclick="goToUserPage(${page + 1})">下一页</a>
+      </li>
+    `;
+  }
+
+  paginationContainer.innerHTML = paginationHTML;
+}
+
+// 跳转到指定页面
+function goToUserPage(page) {
+  loadUsers(page, currentUserPageSize, currentUserSearch, currentUserRole);
+}
+
+// 搜索用户
+function searchUsers() {
+  const searchInput = document.getElementById('userSearchInput');
+  const searchTerm = searchInput.value.trim();
+  loadUsers(1, currentUserPageSize, searchTerm, currentUserRole);
+}
+
+// 添加搜索框回车事件支持
+document.addEventListener('DOMContentLoaded', function () {
+  const userSearchInput = document.getElementById('userSearchInput');
+  if (userSearchInput) {
+    userSearchInput.addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        searchUsers();
+      }
+    });
+  }
+
+  const articleSearchInput = document.getElementById('articleSearchInput');
+  if (articleSearchInput) {
+    articleSearchInput.addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        searchArticles();
+      }
+    });
+  }
+
+  // 加载分类和作者选项
+  loadArticleFilters();
+});
+
+// 加载文章筛选选项
+async function loadArticleFilters() {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/articles`, {
+    // 加载分类选项
+    const categoriesResponse = await fetch(`${API_BASE_URL}/admin/categories`, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
+
+    if (categoriesResponse.ok) {
+      const categories = await categoriesResponse.json();
+      const categoryFilter = document.getElementById('articleCategoryFilter');
+      if (categoryFilter && categories.length > 0) {
+        categories.forEach((category) => {
+          const option = document.createElement('option');
+          option.value = category.id;
+          option.textContent = category.name;
+          categoryFilter.appendChild(option);
+        });
+      }
+    }
+
+    // 加载作者选项
+    const usersResponse = await fetch(`${API_BASE_URL}/admin/users?limit=100`, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
+
+    if (usersResponse.ok) {
+      const usersData = await usersResponse.json();
+      const authorFilter = document.getElementById('articleAuthorFilter');
+      if (authorFilter && usersData.data && usersData.data.length > 0) {
+        usersData.data.forEach((user) => {
+          const option = document.createElement('option');
+          option.value = user.id;
+          option.textContent = user.name || user.email;
+          authorFilter.appendChild(option);
+        });
+      }
+    }
+  } catch (error) {
+    console.error('加载筛选选项失败:', error);
+  }
+}
+
+// 筛选用户
+function filterUsers() {
+  const roleFilter = document.getElementById('userRoleFilter');
+  const selectedRole = roleFilter.value;
+  loadUsers(1, currentUserPageSize, currentUserSearch, selectedRole);
+}
+
+// 改变每页显示数量
+function changePageSize() {
+  const pageSizeSelect = document.getElementById('userPageSize');
+  const newPageSize = parseInt(pageSizeSelect.value);
+  loadUsers(1, newPageSize, currentUserSearch, currentUserRole);
+}
+
+// 更新文章分页组件
+function updateArticlesPagination(pagination) {
+  const { page, limit, total, totalPages } = pagination;
+  const paginationContainer = document.getElementById('articlesPagination');
+  const paginationInfo = document.getElementById('articlesPaginationInfo');
+
+  // 更新分页信息
+  const startItem = (page - 1) * limit + 1;
+  const endItem = Math.min(page * limit, total);
+  paginationInfo.innerHTML = `显示第 ${startItem}-${endItem} 条，共 ${total} 条记录`;
+
+  // 生成分页按钮
+  let paginationHTML = '';
+
+  // 上一页按钮
+  if (page > 1) {
+    paginationHTML += `
+      <li class="page-item">
+        <a class="page-link" href="#" onclick="goToArticlePage(${page - 1})">上一页</a>
+      </li>
+    `;
+  }
+
+  // 页码按钮
+  const startPage = Math.max(1, page - 2);
+  const endPage = Math.min(totalPages, page + 2);
+
+  if (startPage > 1) {
+    paginationHTML += `
+      <li class="page-item">
+        <a class="page-link" href="#" onclick="goToArticlePage(1)">1</a>
+      </li>
+    `;
+    if (startPage > 2) {
+      paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+    }
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    const isActive = i === page ? 'active' : '';
+    paginationHTML += `
+      <li class="page-item ${isActive}">
+        <a class="page-link" href="#" onclick="goToArticlePage(${i})">${i}</a>
+      </li>
+    `;
+  }
+
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1) {
+      paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+    }
+    paginationHTML += `
+      <li class="page-item">
+        <a class="page-link" href="#" onclick="goToArticlePage(${totalPages})">${totalPages}</a>
+      </li>
+    `;
+  }
+
+  // 下一页按钮
+  if (page < totalPages) {
+    paginationHTML += `
+      <li class="page-item">
+        <a class="page-link" href="#" onclick="goToArticlePage(${page + 1})">下一页</a>
+      </li>
+    `;
+  }
+
+  paginationContainer.innerHTML = paginationHTML;
+}
+
+// 跳转到指定页面
+function goToArticlePage(page) {
+  loadArticles(
+    page,
+    currentArticlePageSize,
+    currentArticleSearch,
+    currentArticleStatus,
+    currentArticleCategory,
+    currentArticleAuthor,
+  );
+}
+
+// 搜索文章
+function searchArticles() {
+  const searchInput = document.getElementById('articleSearchInput');
+  const searchTerm = searchInput.value.trim();
+  loadArticles(
+    1,
+    currentArticlePageSize,
+    searchTerm,
+    currentArticleStatus,
+    currentArticleCategory,
+    currentArticleAuthor,
+  );
+}
+
+// 筛选文章
+function filterArticles() {
+  const statusFilter = document.getElementById('articleStatusFilter');
+  const categoryFilter = document.getElementById('articleCategoryFilter');
+  const authorFilter = document.getElementById('articleAuthorFilter');
+
+  const selectedStatus = statusFilter.value;
+  const selectedCategory = categoryFilter.value;
+  const selectedAuthor = authorFilter.value;
+
+  loadArticles(
+    1,
+    currentArticlePageSize,
+    currentArticleSearch,
+    selectedStatus,
+    selectedCategory,
+    selectedAuthor,
+  );
+}
+
+// 改变每页显示数量
+function changeArticlePageSize() {
+  const pageSizeSelect = document.getElementById('articlePageSize');
+  const newPageSize = parseInt(pageSizeSelect.value);
+  loadArticles(
+    1,
+    newPageSize,
+    currentArticleSearch,
+    currentArticleStatus,
+    currentArticleCategory,
+    currentArticleAuthor,
+  );
+}
+
+// 加载文章列表
+async function loadArticles(
+  page = 1,
+  pageSize = 10,
+  search = '',
+  status = '',
+  categoryId = '',
+  authorId = '',
+) {
+  try {
+    // 构建查询参数
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: pageSize.toString(),
+    });
+
+    if (search) {
+      params.append('search', search);
+    }
+
+    if (status) {
+      params.append('published', status);
+    }
+
+    if (categoryId) {
+      params.append('categoryId', categoryId);
+    }
+
+    if (authorId) {
+      params.append('authorId', authorId);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/admin/articles?${params}`, {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -334,6 +686,14 @@ async function loadArticles() {
     if (response.ok) {
       const data = await response.json();
       const tbody = document.getElementById('articlesTableBody');
+
+      // 更新当前分页状态
+      currentArticlePage = page;
+      currentArticlePageSize = pageSize;
+      currentArticleSearch = search;
+      currentArticleStatus = status;
+      currentArticleCategory = categoryId;
+      currentArticleAuthor = authorId;
 
       if (data.data && data.data.length > 0) {
         tbody.innerHTML = data.data
@@ -370,9 +730,15 @@ async function loadArticles() {
                 `,
           )
           .join('');
+
+        // 更新分页组件
+        updateArticlesPagination(data.pagination);
       } else {
         tbody.innerHTML =
           '<tr><td colspan="7" class="text-center text-muted">暂无数据</td></tr>';
+        // 清空分页组件
+        document.getElementById('articlesPagination').innerHTML = '';
+        document.getElementById('articlesPaginationInfo').innerHTML = '';
       }
     }
   } catch (error) {
@@ -444,13 +810,23 @@ async function loadMedia() {
 
       if (data.data && data.data.length > 0) {
         tbody.innerHTML = data.data
-          .map(
-            (media) => `
+          .map((media) => {
+            // 优先使用数据库中的originalName字段，如果没有则从URL中提取
+            const fileName =
+              media.originalName ||
+              (media.url ? media.url.split('/').pop() : '未知文件') ||
+              '未知文件';
+            // 处理文件大小
+            const fileSize = media.size
+              ? formatFileSize(media.size)
+              : '未知大小';
+
+            return `
                     <tr>
                         <td>${media.id}</td>
-                        <td>${media.originalName}</td>
+                        <td>${fileName}</td>
                         <td><span class="badge ${media.type === 'IMAGE' ? 'bg-info' : 'bg-warning'}">${media.type}</span></td>
-                        <td>${formatFileSize(media.size)}</td>
+                        <td>${fileSize}</td>
                         <td>${formatDate(media.createdAt)}</td>
                         <td>
                             <button class="btn btn-sm btn-outline-primary" onclick="viewMedia(${media.id})">
@@ -461,8 +837,8 @@ async function loadMedia() {
                             </button>
                         </td>
                     </tr>
-                `,
-          )
+                `;
+          })
           .join('');
       } else {
         tbody.innerHTML =
@@ -579,21 +955,34 @@ async function loadFavorites() {
 
       if (data.data && data.data.length > 0) {
         tbody.innerHTML = data.data
-          .map(
-            (favorite) => `
+          .map((favorite) => {
+            // 安全地获取用户信息
+            const userName =
+              favorite.user?.name || favorite.user?.email || '未知用户';
+            const userEmail = favorite.user?.email || '';
+            const userDisplay =
+              userName !== userEmail ? `${userName} (${userEmail})` : userName;
+
+            // 安全地获取文章信息
+            const articleTitle = favorite.article?.title || '未知文章';
+
+            // 使用userId和articleId组合作为显示ID
+            const displayId = `${favorite.userId || favorite.user?.id || '?'}-${favorite.articleId || favorite.article?.id || '?'}`;
+
+            return `
                     <tr>
-                        <td>${favorite.id}</td>
-                        <td>${favorite.user.name || favorite.user.email}</td>
-                        <td>${favorite.article.title}</td>
+                        <td>${displayId}</td>
+                        <td>${userDisplay}</td>
+                        <td>${articleTitle}</td>
                         <td>${formatDate(favorite.createdAt)}</td>
                         <td>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteFavorite(${favorite.id})">
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteFavorite(${favorite.userId || favorite.user?.id}, ${favorite.articleId || favorite.article?.id})">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </td>
                     </tr>
-                `,
-          )
+                `;
+          })
           .join('');
       } else {
         tbody.innerHTML =
@@ -667,16 +1056,16 @@ async function loadStats() {
       const userStats = await userStatsResponse.json();
       const userStatsHtml = `
                 <div class="mb-3">
-                    <strong>总用户数：</strong> ${userStats.totalUsers}
+                    <strong>总用户数：</strong> ${userStats.totalUsers || 0}
                 </div>
                 <div class="mb-3">
-                    <strong>今日新增：</strong> ${userStats.newUsersToday}
+                    <strong>今日新增：</strong> ${userStats.todayNewUsers || 0}
                 </div>
                 <div class="mb-3">
-                    <strong>本周新增：</strong> ${userStats.newUsersThisWeek}
+                    <strong>本周新增：</strong> ${userStats.weekNewUsers || 0}
                 </div>
                 <div class="mb-3">
-                    <strong>本月新增：</strong> ${userStats.newUsersThisMonth}
+                    <strong>本月新增：</strong> ${userStats.monthNewUsers || 0}
                 </div>
             `;
       document.getElementById('userStats').innerHTML = userStatsHtml;
@@ -686,25 +1075,30 @@ async function loadStats() {
       const contentStats = await contentStatsResponse.json();
       const contentStatsHtml = `
                 <div class="mb-3">
-                    <strong>总文章数：</strong> ${contentStats.totalArticles}
+                    <strong>总文章数：</strong> ${contentStats.totalArticles || 0}
                 </div>
                 <div class="mb-3">
-                    <strong>已发布：</strong> ${contentStats.publishedArticles}
+                    <strong>已发布：</strong> ${contentStats.publishedArticles || 0}
                 </div>
                 <div class="mb-3">
-                    <strong>草稿：</strong> ${contentStats.draftArticles}
+                    <strong>草稿：</strong> ${contentStats.draftArticles || 0}
                 </div>
                 <div class="mb-3">
-                    <strong>总评论数：</strong> ${contentStats.totalComments}
+                    <strong>总评论数：</strong> ${contentStats.totalComments || 0}
                 </div>
                 <div class="mb-3">
-                    <strong>总笔记数：</strong> ${contentStats.totalNotes}
+                    <strong>总笔记数：</strong> ${contentStats.totalNotes || 0}
                 </div>
             `;
       document.getElementById('contentStats').innerHTML = contentStatsHtml;
     }
   } catch (error) {
     console.error('加载统计数据失败:', error);
+    // 显示错误信息
+    document.getElementById('userStats').innerHTML =
+      '<p class="text-danger">加载用户统计数据失败</p>';
+    document.getElementById('contentStats').innerHTML =
+      '<p class="text-danger">加载内容统计数据失败</p>';
   }
 }
 
@@ -715,7 +1109,7 @@ function formatDate(dateString) {
 }
 
 function formatFileSize(bytes) {
-  if (bytes === 0) return '0 Bytes';
+  if (!bytes || bytes === 0) return '0 Bytes';
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -734,7 +1128,13 @@ function deleteUser(userId) {
       .then((response) => {
         if (response.ok) {
           alert('用户删除成功');
-          loadUsers();
+          // 保持当前分页状态重新加载
+          loadUsers(
+            currentUserPage,
+            currentUserPageSize,
+            currentUserSearch,
+            currentUserRole,
+          );
         } else {
           alert('删除失败');
         }
@@ -757,7 +1157,15 @@ function deleteArticle(articleId) {
       .then((response) => {
         if (response.ok) {
           alert('文章删除成功');
-          loadArticles();
+          // 保持当前分页状态重新加载
+          loadArticles(
+            currentArticlePage,
+            currentArticlePageSize,
+            currentArticleSearch,
+            currentArticleStatus,
+            currentArticleCategory,
+            currentArticleAuthor,
+          );
         } else {
           alert('删除失败');
         }
@@ -779,7 +1187,15 @@ function publishArticle(articleId) {
     .then((response) => {
       if (response.ok) {
         alert('文章发布成功');
-        loadArticles();
+        // 保持当前分页状态重新加载
+        loadArticles(
+          currentArticlePage,
+          currentArticlePageSize,
+          currentArticleSearch,
+          currentArticleStatus,
+          currentArticleCategory,
+          currentArticleAuthor,
+        );
       } else {
         alert('发布失败');
       }
@@ -882,9 +1298,9 @@ function deleteNote(noteId) {
   }
 }
 
-function deleteFavorite(favoriteId) {
+function deleteFavorite(userId, articleId) {
   if (confirm('确定要删除这条收藏记录吗？')) {
-    fetch(`${API_BASE_URL}/admin/favorites/${favoriteId}`, {
+    fetch(`${API_BASE_URL}/admin/favorites/${userId}/${articleId}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${authToken}`,
