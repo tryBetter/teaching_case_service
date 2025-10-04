@@ -290,6 +290,58 @@ export class AdminUsersController {
   }
 
   @ApiOperation({
+    summary: '禁用用户',
+    description: '超级管理员禁用用户（软删除），用户将无法登录',
+  })
+  @ApiParam({ name: 'id', description: '用户ID' })
+  @ApiResponse({
+    status: 200,
+    description: '用户禁用成功',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'number', example: 1 },
+        email: { type: 'string', example: 'user@example.com' },
+        name: { type: 'string', example: '用户姓名' },
+        status: { type: 'string', example: 'INACTIVE' },
+        message: { type: 'string', example: '用户已禁用' },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: '用户不存在' })
+  @RequireSuperAdmin()
+  @Patch(':id/disable')
+  async disable(@Param('id') id: string) {
+    return this.adminUsersService.disable(+id);
+  }
+
+  @ApiOperation({
+    summary: '启用用户',
+    description: '超级管理员启用被禁用的用户',
+  })
+  @ApiParam({ name: 'id', description: '用户ID' })
+  @ApiResponse({
+    status: 200,
+    description: '用户启用成功',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'number', example: 1 },
+        email: { type: 'string', example: 'user@example.com' },
+        name: { type: 'string', example: '用户姓名' },
+        status: { type: 'string', example: 'ACTIVE' },
+        message: { type: 'string', example: '用户已启用' },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: '用户不存在' })
+  @RequireSuperAdmin()
+  @Patch(':id/enable')
+  async enable(@Param('id') id: string) {
+    return this.adminUsersService.enable(+id);
+  }
+
+  @ApiOperation({
     summary: '批量创建用户',
     description: '通过Excel文件批量创建用户',
   })

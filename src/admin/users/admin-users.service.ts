@@ -179,6 +179,38 @@ export class AdminUsersService {
     };
   }
 
+  /**
+   * 禁用用户（软删除）
+   * @param id 用户ID
+   */
+  async disable(id: number) {
+    const user = await this.usersService.disable(id);
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      status: user.status,
+      message: '用户已禁用',
+    };
+  }
+
+  /**
+   * 启用用户
+   * @param id 用户ID
+   */
+  async enable(id: number) {
+    const user = await this.usersService.enable(id);
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      status: user.status,
+      message: '用户已启用',
+    };
+  }
+
   async batchCreate(file: Express.Multer.File) {
     if (!file) {
       throw new Error('请上传Excel文件');

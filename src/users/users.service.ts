@@ -87,6 +87,50 @@ export class UsersService {
   }
 
   /**
+   * 禁用用户（软删除）
+   * @param id 用户ID
+   */
+  async disable(id: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new NotFoundException('用户不存在');
+    }
+
+    return this.prisma.user.update({
+      where: { id },
+      data: { status: 'INACTIVE' },
+      include: {
+        role: true,
+      },
+    });
+  }
+
+  /**
+   * 启用用户
+   * @param id 用户ID
+   */
+  async enable(id: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new NotFoundException('用户不存在');
+    }
+
+    return this.prisma.user.update({
+      where: { id },
+      data: { status: 'ACTIVE' },
+      include: {
+        role: true,
+      },
+    });
+  }
+
+  /**
    * 批量创建用户
    * @param users 用户数据数组
    * @returns 批量创建结果

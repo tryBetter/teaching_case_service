@@ -317,14 +317,25 @@ async function loadUsers(page = 1, pageSize = 10, search = '', role = '') {
                         <td>${user.name || '未设置'}</td>
                         <td>${user.email}</td>
                         <td><span class="badge bg-primary">${user.role.name}</span></td>
+                        <td>
+                            <span class="badge ${user.status === 'ACTIVE' ? 'bg-success' : 'bg-secondary'}">
+                                ${user.status === 'ACTIVE' ? '活跃' : '禁用'}
+                            </span>
+                        </td>
                         <td>${formatDate(user.createdAt)}</td>
                         <td>
                             <button class="btn btn-sm btn-outline-primary" onclick="editUser(${user.id})">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${user.id})">
-                                <i class="bi bi-trash"></i>
-                            </button>
+                            ${
+                              user.status === 'ACTIVE'
+                                ? `<button class="btn btn-sm btn-outline-warning" onclick="disableUser(${user.id})">
+                                   <i class="bi bi-ban"></i>
+                                 </button>`
+                                : `<button class="btn btn-sm btn-outline-success" onclick="enableUser(${user.id})">
+                                   <i class="bi bi-check-circle"></i>
+                                 </button>`
+                            }
                         </td>
                     </tr>
                 `,
@@ -335,7 +346,7 @@ async function loadUsers(page = 1, pageSize = 10, search = '', role = '') {
         updateUsersPagination(data.pagination);
       } else {
         tbody.innerHTML =
-          '<tr><td colspan="6" class="text-center text-muted">暂无数据</td></tr>';
+          '<tr><td colspan="7" class="text-center text-muted">暂无数据</td></tr>';
         // 清空分页组件
         document.getElementById('usersPagination').innerHTML = '';
         document.getElementById('usersPaginationInfo').innerHTML = '';
@@ -344,7 +355,7 @@ async function loadUsers(page = 1, pageSize = 10, search = '', role = '') {
   } catch (error) {
     console.error('加载用户列表失败:', error);
     document.getElementById('usersTableBody').innerHTML =
-      '<tr><td colspan="6" class="text-center text-danger">加载失败</td></tr>';
+      '<tr><td colspan="7" class="text-center text-danger">加载失败</td></tr>';
   }
 }
 
@@ -1142,6 +1153,66 @@ function deleteUser(userId) {
       .catch((error) => {
         console.error('删除用户失败:', error);
         alert('删除失败');
+      });
+  }
+}
+
+// 禁用用户
+function disableUser(userId) {
+  if (confirm('确定要禁用这个用户吗？禁用后用户将无法登录。')) {
+    fetch(`${API_BASE_URL}/admin/users/${userId}/disable`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    })
+      .then((response) => {
+        if (response.ok) {
+          alert('用户已禁用');
+          // 保持当前分页状态重新加载
+          loadUsers(
+            currentUserPage,
+            currentUserPageSize,
+            currentUserSearch,
+            currentUserRole,
+          );
+        } else {
+          alert('禁用失败');
+        }
+      })
+      .catch((error) => {
+        console.error('禁用用户失败:', error);
+        alert('禁用失败');
+      });
+  }
+}
+
+// 启用用户
+function enableUser(userId) {
+  if (confirm('确定要启用这个用户吗？')) {
+    fetch(`${API_BASE_URL}/admin/users/${userId}/enable`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    })
+      .then((response) => {
+        if (response.ok) {
+          alert('用户已启用');
+          // 保持当前分页状态重新加载
+          loadUsers(
+            currentUserPage,
+            currentUserPageSize,
+            currentUserSearch,
+            currentUserRole,
+          );
+        } else {
+          alert('启用失败');
+        }
+      })
+      .catch((error) => {
+        console.error('启用用户失败:', error);
+        alert('启用失败');
       });
   }
 }
