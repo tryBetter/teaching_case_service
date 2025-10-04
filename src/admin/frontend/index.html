@@ -866,6 +866,169 @@
       </div>
     </div>
 
+    <!-- 添加用户模态框 -->
+    <div
+      class="modal fade"
+      id="createUserModal"
+      tabindex="-1"
+      aria-labelledby="createUserModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="createUserModalLabel">添加用户</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="createUserForm">
+              <div class="mb-3">
+                <label for="createUserEmail" class="form-label"
+                  >邮箱 <span class="text-danger">*</span></label
+                >
+                <input
+                  type="email"
+                  class="form-control"
+                  id="createUserEmail"
+                  required
+                />
+                <div class="invalid-feedback"></div>
+              </div>
+              <div class="mb-3">
+                <label for="createUserName" class="form-label">姓名</label>
+                <input type="text" class="form-control" id="createUserName" />
+                <div class="invalid-feedback"></div>
+              </div>
+              <div class="mb-3">
+                <label for="createUserPassword" class="form-label"
+                  >密码 <span class="text-danger">*</span></label
+                >
+                <input
+                  type="password"
+                  class="form-control"
+                  id="createUserPassword"
+                  required
+                />
+                <div class="invalid-feedback"></div>
+              </div>
+              <div class="mb-3">
+                <label for="createUserRole" class="form-label"
+                  >角色 <span class="text-danger">*</span></label
+                >
+                <select class="form-select" id="createUserRole" required>
+                  <option value="">请选择角色</option>
+                  <!-- 角色选项将通过JavaScript动态加载 -->
+                </select>
+                <div class="invalid-feedback"></div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              onclick="submitCreateUser()"
+            >
+              创建用户
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 编辑用户模态框 -->
+    <div
+      class="modal fade"
+      id="editUserModal"
+      tabindex="-1"
+      aria-labelledby="editUserModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editUserModalLabel">编辑用户</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="editUserForm">
+              <input type="hidden" id="editUserId" />
+              <div class="mb-3">
+                <label for="editUserEmail" class="form-label"
+                  >邮箱 <span class="text-danger">*</span></label
+                >
+                <input
+                  type="email"
+                  class="form-control"
+                  id="editUserEmail"
+                  required
+                />
+                <div class="invalid-feedback"></div>
+              </div>
+              <div class="mb-3">
+                <label for="editUserName" class="form-label">姓名</label>
+                <input type="text" class="form-control" id="editUserName" />
+                <div class="invalid-feedback"></div>
+              </div>
+              <div class="mb-3">
+                <label for="editUserPassword" class="form-label">密码</label>
+                <input
+                  type="password"
+                  class="form-control"
+                  id="editUserPassword"
+                  placeholder="留空表示不修改密码"
+                />
+                <div class="invalid-feedback"></div>
+              </div>
+              <div class="mb-3">
+                <label for="editUserRole" class="form-label"
+                  >角色 <span class="text-danger">*</span></label
+                >
+                <select class="form-select" id="editUserRole" required>
+                  <option value="">请选择角色</option>
+                  <!-- 角色选项将通过JavaScript动态加载 -->
+                </select>
+                <div class="invalid-feedback"></div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              onclick="submitEditUser()"
+            >
+              更新用户
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 

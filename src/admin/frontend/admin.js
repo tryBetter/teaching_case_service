@@ -1321,9 +1321,52 @@ function deleteFavorite(userId, articleId) {
   }
 }
 
-// 占位函数（可以后续扩展）
+// 显示创建用户模态框
+function showCreateUserModal() {
+  // 清空表单
+  document.getElementById('createUserForm').reset();
+  clearFormValidation('createUserForm');
+
+  // 加载角色选项
+  loadRoleOptions('createUserRole');
+
+  // 显示模态框
+  const modal = new bootstrap.Modal(document.getElementById('createUserModal'));
+  modal.show();
+}
+
+// 编辑用户
 function editUser(userId) {
-  alert('编辑用户功能待实现');
+  // 获取用户信息
+  fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+    },
+  })
+    .then((response) => response.json())
+    .then((user) => {
+      // 填充表单
+      document.getElementById('editUserId').value = user.id;
+      document.getElementById('editUserEmail').value = user.email;
+      document.getElementById('editUserName').value = user.name || '';
+      document.getElementById('editUserPassword').value = '';
+
+      // 加载角色选项并设置当前角色
+      loadRoleOptions('editUserRole', user.role.id);
+
+      // 清空验证状态
+      clearFormValidation('editUserForm');
+
+      // 显示模态框
+      const modal = new bootstrap.Modal(
+        document.getElementById('editUserModal'),
+      );
+      modal.show();
+    })
+    .catch((error) => {
+      console.error('获取用户信息失败:', error);
+      alert('获取用户信息失败');
+    });
 }
 
 function editArticle(articleId) {
@@ -1342,8 +1385,203 @@ function viewRolePermissions(roleId) {
   alert('查看角色权限功能待实现');
 }
 
-function showCreateUserModal() {
-  alert('创建用户功能待实现');
+// 加载角色选项
+async function loadRoleOptions(selectId, selectedRoleId = null) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/roles`, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
+
+    if (response.ok) {
+      const roles = await response.json();
+      const select = document.getElementById(selectId);
+
+      // 清空现有选项（保留第一个选项）
+      select.innerHTML = '<option value="">请选择角色</option>';
+
+      // 添加角色选项
+      roles.forEach((role) => {
+        const option = document.createElement('option');
+        option.value = role.id;
+        option.textContent = role.name;
+        if (selectedRoleId && role.id === selectedRoleId) {
+          option.selected = true;
+        }
+        select.appendChild(option);
+      });
+    }
+  } catch (error) {
+    console.error('加载角色选项失败:', error);
+  }
+}
+
+// 清空表单验证状态
+function clearFormValidation(formId) {
+  const form = document.getElementById(formId);
+  const inputs = form.querySelectorAll('.form-control, .form-select');
+  inputs.forEach((input) => {
+    input.classList.remove('is-invalid');
+    const feedback = input.parentNode.querySelector('.invalid-feedback');
+    if (feedback) {
+      feedback.textContent = '';
+    }
+  });
+}
+
+// 显示字段验证错误
+function showFieldError(fieldId, message) {
+  const field = document.getElementById(fieldId);
+  field.classList.add('is-invalid');
+  const feedback = field.parentNode.querySelector('.invalid-feedback');
+  if (feedback) {
+    feedback.textContent = message;
+  }
+}
+
+// 提交创建用户表单
+async function submitCreateUser() {
+  const email = document.getElementById('createUserEmail').value.trim();
+  const name = document.getElementById('createUserName').value.trim();
+  const password = document.getElementById('createUserPassword').value;
+  const roleId = document.getElementById('createUserRole').value;
+
+  // 清空之前的验证状态
+  clearFormValidation('createUserForm');
+
+  // 验证必填字段
+  let hasError = false;
+
+  if (!email) {
+    showFieldError('createUserEmail', '请输入邮箱');
+    hasError = true;
+  }
+
+  if (!password) {
+    showFieldError('createUserPassword', '请输入密码');
+    hasError = true;
+  }
+
+  if (!roleId) {
+    showFieldError('createUserRole', '请选择角色');
+    hasError = true;
+  }
+
+  if (hasError) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/users`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({
+        email,
+        name: name || undefined,
+        password,
+        roleId: parseInt(roleId),
+      }),
+    });
+
+    if (response.ok) {
+      alert('用户创建成功');
+      // 关闭模态框
+      const modal = bootstrap.Modal.getInstance(
+        document.getElementById('createUserModal'),
+      );
+      modal.hide();
+      // 刷新用户列表
+      loadUsers(
+        currentUserPage,
+        currentUserPageSize,
+        currentUserSearch,
+        currentUserRole,
+      );
+    } else {
+      const error = await response.json();
+      alert(error.message || '创建用户失败');
+    }
+  } catch (error) {
+    console.error('创建用户失败:', error);
+    alert('创建用户失败');
+  }
+}
+
+// 提交编辑用户表单
+async function submitEditUser() {
+  const userId = document.getElementById('editUserId').value;
+  const email = document.getElementById('editUserEmail').value.trim();
+  const name = document.getElementById('editUserName').value.trim();
+  const password = document.getElementById('editUserPassword').value;
+  const roleId = document.getElementById('editUserRole').value;
+
+  // 清空之前的验证状态
+  clearFormValidation('editUserForm');
+
+  // 验证必填字段
+  let hasError = false;
+
+  if (!email) {
+    showFieldError('editUserEmail', '请输入邮箱');
+    hasError = true;
+  }
+
+  if (!roleId) {
+    showFieldError('editUserRole', '请选择角色');
+    hasError = true;
+  }
+
+  if (hasError) {
+    return;
+  }
+
+  try {
+    const updateData = {
+      email,
+      name: name || undefined,
+      roleId: parseInt(roleId),
+    };
+
+    // 只有在密码不为空时才更新密码
+    if (password) {
+      updateData.password = password;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify(updateData),
+    });
+
+    if (response.ok) {
+      alert('用户更新成功');
+      // 关闭模态框
+      const modal = bootstrap.Modal.getInstance(
+        document.getElementById('editUserModal'),
+      );
+      modal.hide();
+      // 刷新用户列表
+      loadUsers(
+        currentUserPage,
+        currentUserPageSize,
+        currentUserSearch,
+        currentUserRole,
+      );
+    } else {
+      const error = await response.json();
+      alert(error.message || '更新用户失败');
+    }
+  } catch (error) {
+    console.error('更新用户失败:', error);
+    alert('更新用户失败');
+  }
 }
 
 function showCreateCategoryModal() {
