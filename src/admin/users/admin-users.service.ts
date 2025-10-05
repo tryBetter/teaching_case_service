@@ -236,11 +236,16 @@ export class AdminUsersService {
   async downloadTemplate(res: Response) {
     const templateBuffer = this.excelService.generateUserTemplate();
 
+    // 使用URL编码处理中文文件名
+    const filename = encodeURIComponent('用户导入模板.xlsx');
+
     res.set({
       'Content-Type':
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'Content-Disposition': 'attachment; filename="用户导入模板.xlsx"',
+      'Content-Disposition': `attachment; filename*=UTF-8''${filename}`,
       'Content-Length': templateBuffer.length.toString(),
+      'Cache-Control': 'no-cache',
+      'Access-Control-Expose-Headers': 'Content-Disposition',
     });
 
     res.send(templateBuffer);

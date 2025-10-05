@@ -1655,6 +1655,215 @@ async function submitEditUser() {
   }
 }
 
+// 显示批量导入模态框
+function showBatchImportModal() {
+  // 重置表单和状态
+  document.getElementById('userExcelFile').value = '';
+  document.getElementById('fileInfo').style.display = 'none';
+  document.getElementById('importResult').style.display = 'none';
+  document.getElementById('importButton').disabled = true;
+
+  // 显示模态框
+  const modal = new bootstrap.Modal(
+    document.getElementById('batchImportModal'),
+  );
+  modal.show();
+}
+
+// 下载用户模板
+async function downloadUserTemplate() {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/admin/users/template/download`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      },
+    );
+
+    if (response.ok) {
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = '用户导入模板.xlsx';
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } else {
+      alert('下载模板失败，请重试');
+    }
+  } catch (error) {
+    console.error('下载模板失败:', error);
+    alert('下载模板失败：' + error.message);
+  }
+}
+
+// 处理文件选择
+function handleFileSelect(event) {
+  const file = event.target.files[0];
+  const fileInfo = document.getElementById('fileInfo');
+  const fileInfoText = document.getElementById('fileInfoText');
+  const importButton = document.getElementById('importButton');
+
+  if (file) {
+    // 验证文件类型
+    const allowedTypes = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+      'application/vnd.ms-excel', // .xls
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      fileInfoText.textContent = '请选择Excel文件（.xlsx或.xls格式）';
+      fileInfo.className = 'alert alert-danger';
+      fileInfo.style.display = 'block';
+      importButton.disabled = true;
+      return;
+    }
+
+    // 验证文件大小（10MB限制）
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      fileInfoText.textContent = '文件大小不能超过10MB';
+      fileInfo.className = 'alert alert-danger';
+      fileInfo.style.display = 'block';
+      importButton.disabled = true;
+      return;
+    }
+
+    // 显示文件信息
+    fileInfoText.textContent = `已选择文件：${file.name} (${formatFileSize(file.size)})`;
+    fileInfo.className = 'alert alert-success';
+    fileInfo.style.display = 'block';
+    importButton.disabled = false;
+  } else {
+    fileInfo.style.display = 'none';
+    importButton.disabled = true;
+  }
+}
+
+// 开始批量导入
+async function startBatchImport() {
+  const fileInput = document.getElementById('userExcelFile');
+  const file = fileInput.files[0];
+
+  if (!file) {
+    alert('请先选择Excel文件');
+    return;
+  }
+
+  const importButton = document.getElementById('importButton');
+  const originalText = importButton.innerHTML;
+
+  try {
+    // 显示加载状态
+    importButton.disabled = true;
+    importButton.innerHTML = '<i class="bi bi-hourglass-split"></i> 导入中...';
+
+    // 创建FormData
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // 发送请求
+    const response = await fetch(`${API_BASE_URL}/admin/users/batch`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: formData,
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      displayImportResult(result);
+
+      // 如果导入成功，刷新用户列表
+      if (result.successCount > 0) {
+        loadUsers(
+          currentUserPage,
+          currentUserPageSize,
+          currentUserSearch,
+          currentUserRole,
+        );
+      }
+    } else {
+      const error = await response.json();
+      alert('导入失败：' + (error.message || '未知错误'));
+    }
+  } catch (error) {
+    console.error('批量导入失败:', error);
+    alert('导入失败：' + error.message);
+  } finally {
+    // 恢复按钮状态
+    importButton.disabled = false;
+    importButton.innerHTML = originalText;
+  }
+}
+
+// 显示导入结果
+function displayImportResult(result) {
+  const importResult = document.getElementById('importResult');
+  const importResultContent = document.getElementById('importResultContent');
+
+  let resultHtml = `
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card border-success">
+          <div class="card-header bg-success text-white">
+            <i class="bi bi-check-circle"></i> 成功导入
+          </div>
+          <div class="card-body">
+            <h5 class="card-title text-success">${result.successCount} 个用户</h5>
+            <p class="card-text">成功创建的用户：</p>
+            <ul class="list-unstyled">
+  `;
+
+  result.successUsers.forEach((user) => {
+    resultHtml += `<li><i class="bi bi-person-check"></i> ${user.email} (${user.name || '未设置姓名'})</li>`;
+  });
+
+  resultHtml += `
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card border-danger">
+          <div class="card-header bg-danger text-white">
+            <i class="bi bi-exclamation-circle"></i> 导入失败
+          </div>
+          <div class="card-body">
+            <h5 class="card-title text-danger">${result.failureCount} 个用户</h5>
+            <p class="card-text">失败原因：</p>
+            <ul class="list-unstyled">
+  `;
+
+  result.failedUsers.forEach((failed) => {
+    resultHtml += `<li><i class="bi bi-x-circle"></i> 第${failed.row}行: ${failed.error}</li>`;
+  });
+
+  resultHtml += `
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-3">
+      <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i>
+        总计：${result.totalCount} 个用户，成功：${result.successCount} 个，失败：${result.failureCount} 个
+      </div>
+    </div>
+  `;
+
+  importResultContent.innerHTML = resultHtml;
+  importResult.style.display = 'block';
+}
+
 function showCreateCategoryModal() {
   alert('创建分类功能待实现');
 }
