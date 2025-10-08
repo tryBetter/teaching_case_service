@@ -1096,6 +1096,151 @@
       </div>
     </div>
 
+    <!-- 编辑文章模态框 -->
+    <div
+      class="modal fade"
+      id="editArticleModal"
+      tabindex="-1"
+      aria-labelledby="editArticleModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editArticleModalLabel">编辑文章</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="editArticleForm">
+              <input type="hidden" id="editArticleId" />
+
+              <div class="mb-3">
+                <label for="editArticleTitle" class="form-label">标题 *</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="editArticleTitle"
+                  required
+                />
+              </div>
+
+              <div class="mb-3">
+                <label for="editArticleSummary" class="form-label">摘要</label>
+                <textarea
+                  class="form-control"
+                  id="editArticleSummary"
+                  rows="2"
+                ></textarea>
+              </div>
+
+              <div class="mb-3">
+                <label for="editArticleContent" class="form-label">内容</label>
+                <textarea
+                  class="form-control"
+                  id="editArticleContent"
+                  rows="6"
+                ></textarea>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="editArticleCategoryId" class="form-label"
+                      >分类 *</label
+                    >
+                    <select
+                      class="form-select"
+                      id="editArticleCategoryId"
+                      required
+                    >
+                      <option value="">请选择分类</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="editArticleCover" class="form-label"
+                      >封面图片URL</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="editArticleCover"
+                      placeholder="https://..."
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="editArticleKeywords" class="form-label"
+                  >关键词</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="editArticleKeywords"
+                  placeholder="用逗号分隔，例如：教学,案例,研究"
+                />
+                <div class="form-text">多个关键词请用逗号分隔</div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="editArticlePublished"
+                    />
+                    <label class="form-check-label" for="editArticlePublished">
+                      发布文章
+                    </label>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="editArticleFeatured"
+                    />
+                    <label class="form-check-label" for="editArticleFeatured">
+                      设为推荐
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              onclick="updateArticle()"
+            >
+              <i class="bi bi-check-circle"></i>
+              保存修改
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 批量导入用户模态框 -->
     <div
       class="modal fade"

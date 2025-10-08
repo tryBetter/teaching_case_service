@@ -1610,8 +1610,171 @@ function editUser(userId) {
     });
 }
 
-function editArticle(articleId) {
-  alert('编辑文章功能待实现');
+// 编辑文章
+async function editArticle(articleId) {
+  try {
+    // 获取文章详情
+    const response = await fetch(
+      `${API_BASE_URL}/admin/articles/${articleId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      alert('获取文章信息失败');
+      return;
+    }
+
+    const article = await response.json();
+
+    // 填充表单
+    document.getElementById('editArticleId').value = article.id;
+    document.getElementById('editArticleTitle').value = article.title || '';
+    document.getElementById('editArticleSummary').value = article.summary || '';
+    document.getElementById('editArticleContent').value = article.content || '';
+    document.getElementById('editArticleCover').value = article.cover || '';
+    document.getElementById('editArticleKeywords').value = article.keywords
+      ? article.keywords.join(', ')
+      : '';
+    document.getElementById('editArticlePublished').checked =
+      article.published || false;
+    document.getElementById('editArticleFeatured').checked =
+      article.featured || false;
+
+    // 加载分类选项并选中当前分类
+    await loadCategoriesForEdit(article.categoryId);
+
+    // 显示模态框
+    const modal = new bootstrap.Modal(
+      document.getElementById('editArticleModal'),
+    );
+    modal.show();
+  } catch (error) {
+    console.error('编辑文章失败:', error);
+    alert('获取文章信息失败');
+  }
+}
+
+// 为编辑表单加载分类选项
+async function loadCategoriesForEdit(selectedCategoryId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/categories`, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
+
+    if (response.ok) {
+      const categories = await response.json();
+      const select = document.getElementById('editArticleCategoryId');
+
+      select.innerHTML = '<option value="">请选择分类</option>';
+      categories.forEach((category) => {
+        const option = document.createElement('option');
+        option.value = category.id;
+        option.textContent = category.name;
+        if (category.id === selectedCategoryId) {
+          option.selected = true;
+        }
+        select.appendChild(option);
+      });
+    }
+  } catch (error) {
+    console.error('加载分类失败:', error);
+  }
+}
+
+// 更新文章
+async function updateArticle() {
+  const articleId = document.getElementById('editArticleId').value;
+  const title = document.getElementById('editArticleTitle').value.trim();
+  const summary = document.getElementById('editArticleSummary').value.trim();
+  const content = document.getElementById('editArticleContent').value.trim();
+  const categoryId = parseInt(
+    document.getElementById('editArticleCategoryId').value,
+  );
+  const cover = document.getElementById('editArticleCover').value.trim();
+  const keywordsStr = document
+    .getElementById('editArticleKeywords')
+    .value.trim();
+  const published = document.getElementById('editArticlePublished').checked;
+  const featured = document.getElementById('editArticleFeatured').checked;
+
+  // 验证必填字段
+  if (!title) {
+    alert('请输入文章标题');
+    return;
+  }
+
+  if (!categoryId) {
+    alert('请选择分类');
+    return;
+  }
+
+  // 处理关键词
+  const keywords = keywordsStr
+    ? keywordsStr
+        .split(',')
+        .map((k) => k.trim())
+        .filter((k) => k)
+    : [];
+
+  // 构建更新数据
+  const updateData = {
+    title,
+    categoryId,
+    published,
+    featured,
+  };
+
+  if (summary) updateData.summary = summary;
+  if (content) updateData.content = content;
+  if (cover) updateData.cover = cover;
+  if (keywords.length > 0) updateData.keywords = keywords;
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/admin/articles/${articleId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(updateData),
+      },
+    );
+
+    if (response.ok) {
+      alert('文章更新成功！');
+
+      // 关闭模态框
+      const modal = bootstrap.Modal.getInstance(
+        document.getElementById('editArticleModal'),
+      );
+      modal.hide();
+
+      // 重新加载文章列表
+      loadArticles(
+        currentArticlePage,
+        currentArticlePageSize,
+        currentArticleSearch,
+        currentArticleStatus,
+        currentArticleCategory,
+        currentArticleAuthor,
+        currentDeleteFilter,
+      );
+    } else {
+      const error = await response.json();
+      alert('更新失败: ' + (error.message || '未知错误'));
+    }
+  } catch (error) {
+    console.error('更新文章失败:', error);
+    alert('更新失败，请重试');
+  }
 }
 
 function editCategory(categoryId) {
