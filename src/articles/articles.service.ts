@@ -64,11 +64,14 @@ export class ArticlesService {
   }
 
   /**
-   * 查询所有文章
+   * 查询所有文章（不包括已删除的）
    * @returns 所有文章
    */
   findAll() {
     return this.prisma.article.findMany({
+      where: {
+        deletedAt: null, // 只查询未删除的文章
+      },
       include: {
         category: true,
         filterConditions: {
@@ -111,6 +114,7 @@ export class ArticlesService {
   ) {
     // 构建查询条件
     const where: Prisma.ArticleWhereInput = {
+      deletedAt: null, // 只查询未删除的文章
       ...(title && (contains ? { title: { contains: title } } : { title })),
       ...(authorId !== undefined && { authorId }),
       ...(published !== undefined && { published }),
@@ -152,7 +156,7 @@ export class ArticlesService {
   }
 
   /**
-   * 根据id查询文章和对应的文章评论
+   * 根据id查询文章和对应的文章评论（包括已删除的）
    * @param id 文章id
    * @returns 文章和对应的文章评论
    */
@@ -261,11 +265,35 @@ export class ArticlesService {
   }
 
   /**
-   * 删除文章
+   * 软删除文章
    * @param id 文章id
    * @returns 删除后的文章
    */
   remove(id: number) {
+    return this.prisma.article.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+  }
+
+  /**
+   * 恢复已删除的文章
+   * @param id 文章id
+   * @returns 恢复后的文章
+   */
+  restore(id: number) {
+    return this.prisma.article.update({
+      where: { id },
+      data: { deletedAt: null },
+    });
+  }
+
+  /**
+   * 永久删除文章（真删除）
+   * @param id 文章id
+   * @returns 删除后的文章
+   */
+  permanentlyDelete(id: number) {
     return this.prisma.article.delete({ where: { id } });
   }
 }

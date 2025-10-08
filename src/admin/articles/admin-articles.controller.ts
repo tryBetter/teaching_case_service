@@ -308,19 +308,19 @@ export class AdminArticlesController {
   }
 
   @ApiOperation({
-    summary: '删除文章',
-    description: '超级管理员删除文章（谨慎操作）',
+    summary: '软删除文章',
+    description: '超级管理员软删除文章（可恢复）',
   })
   @ApiParam({ name: 'id', description: '文章ID' })
   @ApiResponse({
     status: 200,
-    description: '文章删除成功',
+    description: '文章软删除成功',
     schema: {
       type: 'object',
       properties: {
         id: { type: 'number', example: 1 },
         title: { type: 'string', example: '被删除的文章标题' },
-        message: { type: 'string', example: '文章删除成功' },
+        message: { type: 'string', example: '文章已软删除成功' },
       },
     },
   })
@@ -329,6 +329,139 @@ export class AdminArticlesController {
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return this.adminArticlesService.remove(+id);
+  }
+
+  @ApiOperation({
+    summary: '恢复已删除的文章',
+    description: '超级管理员恢复已软删除的文章',
+  })
+  @ApiParam({ name: 'id', description: '文章ID' })
+  @ApiResponse({
+    status: 200,
+    description: '文章恢复成功',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'number', example: 1 },
+        title: { type: 'string', example: '恢复的文章标题' },
+        message: { type: 'string', example: '文章恢复成功' },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: '文章不存在' })
+  @ApiResponse({ status: 400, description: '文章未被删除，无需恢复' })
+  @RequireSuperAdmin()
+  @Post(':id/restore')
+  async restore(@Param('id') id: string) {
+    return this.adminArticlesService.restore(+id);
+  }
+
+  @ApiOperation({
+    summary: '永久删除文章',
+    description: '超级管理员永久删除文章（不可恢复，谨慎操作）',
+  })
+  @ApiParam({ name: 'id', description: '文章ID' })
+  @ApiResponse({
+    status: 200,
+    description: '文章永久删除成功',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'number', example: 1 },
+        title: { type: 'string', example: '被删除的文章标题' },
+        message: { type: 'string', example: '文章已永久删除' },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: '文章不存在' })
+  @ApiResponse({ status: 400, description: '文章存在关联数据，无法永久删除' })
+  @RequireSuperAdmin()
+  @Delete(':id/permanent')
+  async permanentlyDelete(@Param('id') id: string) {
+    return this.adminArticlesService.permanentlyDelete(+id);
+  }
+
+  @ApiOperation({
+    summary: '获取已删除的文章列表',
+    description: '超级管理员获取所有已软删除的文章',
+  })
+  @ApiQuery({
+    name: 'page',
+    description: '页码',
+    required: false,
+    type: Number,
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    description: '每页数量',
+    required: false,
+    type: Number,
+    example: 10,
+  })
+  @ApiQuery({
+    name: 'search',
+    description: '搜索关键词（标题或内容）',
+    required: false,
+    type: String,
+  })
+  @ApiResponse({
+    status: 200,
+    description: '获取已删除文章列表成功',
+    schema: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'number', example: 1 },
+              title: { type: 'string', example: '文章标题' },
+              summary: { type: 'string', example: '文章摘要' },
+              deletedAt: { type: 'string', format: 'date-time' },
+              author: {
+                type: 'object',
+                properties: {
+                  id: { type: 'number', example: 1 },
+                  name: { type: 'string', example: '作者姓名' },
+                  email: { type: 'string', example: 'author@example.com' },
+                },
+              },
+              category: {
+                type: 'object',
+                properties: {
+                  id: { type: 'number', example: 1 },
+                  name: { type: 'string', example: '分类名称' },
+                },
+              },
+            },
+          },
+        },
+        pagination: {
+          type: 'object',
+          properties: {
+            page: { type: 'number', example: 1 },
+            limit: { type: 'number', example: 10 },
+            total: { type: 'number', example: 50 },
+            totalPages: { type: 'number', example: 5 },
+          },
+        },
+      },
+    },
+  })
+  @RequireSuperAdmin()
+  @Get('deleted/list')
+  async findDeleted(
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
+    @Query('search') search?: string,
+  ) {
+    return this.adminArticlesService.findDeleted({
+      page: parseInt(page),
+      limit: parseInt(limit),
+      search,
+    });
   }
 
   @ApiOperation({
@@ -445,6 +578,7 @@ export class AdminArticlesController {
         publishedArticles: { type: 'number', example: 980 },
         draftArticles: { type: 'number', example: 270 },
         featuredArticles: { type: 'number', example: 50 },
+        deletedArticles: { type: 'number', example: 30 },
         articlesByCategory: {
           type: 'array',
           items: {

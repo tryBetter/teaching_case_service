@@ -52,6 +52,7 @@ model Article {
   keywords  String[] // 文章关键词数组
   featured  Boolean  @default(false) // 重点推荐
   published Boolean  @default(false)
+  deletedAt DateTime? // 软删除时间戳，null表示未删除
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
