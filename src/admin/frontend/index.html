@@ -487,6 +487,52 @@
 
             <div class="card">
               <div class="card-body">
+                <!-- 状态筛选按钮组 -->
+                <div class="mb-3">
+                  <div class="btn-group" role="group" aria-label="文章状态筛选">
+                    <input
+                      type="radio"
+                      class="btn-check"
+                      name="articleDeleteFilter"
+                      id="normalArticles"
+                      value="normal"
+                      checked
+                      autocomplete="off"
+                      onchange="changeDeleteFilter()"
+                    />
+                    <label class="btn btn-outline-primary" for="normalArticles">
+                      <i class="bi bi-file-text"></i> 正常文章
+                    </label>
+
+                    <input
+                      type="radio"
+                      class="btn-check"
+                      name="articleDeleteFilter"
+                      id="allArticles"
+                      value="all"
+                      autocomplete="off"
+                      onchange="changeDeleteFilter()"
+                    />
+                    <label class="btn btn-outline-secondary" for="allArticles">
+                      <i class="bi bi-archive"></i> 全部文章
+                    </label>
+
+                    <input
+                      type="radio"
+                      class="btn-check"
+                      name="articleDeleteFilter"
+                      id="deletedArticles"
+                      value="deleted"
+                      autocomplete="off"
+                      onchange="changeDeleteFilter()"
+                    />
+                    <label class="btn btn-outline-danger" for="deletedArticles">
+                      <i class="bi bi-trash"></i> 回收站
+                    </label>
+                  </div>
+                  <small class="text-muted ms-3" id="filterTip"></small>
+                </div>
+
                 <!-- 搜索和筛选区域 -->
                 <div class="row mb-3">
                   <div class="col-md-4">
@@ -554,13 +600,15 @@
                   <table class="table table-hover">
                     <thead>
                       <tr>
-                        <th>ID</th>
+                        <th style="width: 60px">ID</th>
                         <th>标题</th>
-                        <th>作者</th>
-                        <th>分类</th>
-                        <th>状态</th>
-                        <th>创建时间</th>
-                        <th>操作</th>
+                        <th style="width: 100px">作者</th>
+                        <th style="width: 100px">分类</th>
+                        <th style="width: 120px">状态</th>
+                        <th style="width: 160px" id="timeColumnHeader">
+                          创建时间
+                        </th>
+                        <th style="width: 180px">操作</th>
                       </tr>
                     </thead>
                     <tbody id="articlesTableBody">

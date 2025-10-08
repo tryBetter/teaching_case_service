@@ -73,6 +73,13 @@ export class AdminArticlesController {
     required: false,
     type: String,
   })
+  @ApiQuery({
+    name: 'includeDeleted',
+    description: '是否包括已删除的文章',
+    required: false,
+    type: Boolean,
+    example: false,
+  })
   @ApiResponse({
     status: 200,
     description: '获取文章列表成功',
@@ -89,6 +96,12 @@ export class AdminArticlesController {
               summary: { type: 'string', example: '文章摘要' },
               published: { type: 'boolean', example: true },
               featured: { type: 'boolean', example: false },
+              deletedAt: {
+                type: 'string',
+                format: 'date-time',
+                nullable: true,
+                description: '删除时间，null表示未删除',
+              },
               createdAt: { type: 'string', format: 'date-time' },
               updatedAt: { type: 'string', format: 'date-time' },
               author: {
@@ -138,6 +151,7 @@ export class AdminArticlesController {
     @Query('categoryId') categoryId?: string,
     @Query('authorId') authorId?: string,
     @Query('search') search?: string,
+    @Query('includeDeleted') includeDeleted?: string,
   ) {
     return this.adminArticlesService.findAll({
       page: parseInt(page),
@@ -147,6 +161,7 @@ export class AdminArticlesController {
       categoryId: categoryId ? parseInt(categoryId) : undefined,
       authorId: authorId ? parseInt(authorId) : undefined,
       search,
+      includeDeleted: includeDeleted === 'true',
     });
   }
 

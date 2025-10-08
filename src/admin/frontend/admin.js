@@ -274,6 +274,7 @@ let currentArticleSearch = '';
 let currentArticleStatus = '';
 let currentArticleCategory = '';
 let currentArticleAuthor = '';
+let currentDeleteFilter = 'normal'; // 'normal' | 'all' | 'deleted'
 
 // 加载用户列表
 async function loadUsers(page = 1, pageSize = 10, search = '', role = '') {
@@ -605,6 +606,7 @@ function goToArticlePage(page) {
     currentArticleStatus,
     currentArticleCategory,
     currentArticleAuthor,
+    currentDeleteFilter,
   );
 }
 
@@ -619,6 +621,7 @@ function searchArticles() {
     currentArticleStatus,
     currentArticleCategory,
     currentArticleAuthor,
+    currentDeleteFilter,
   );
 }
 
@@ -639,6 +642,7 @@ function filterArticles() {
     selectedStatus,
     selectedCategory,
     selectedAuthor,
+    currentDeleteFilter,
   );
 }
 
@@ -653,7 +657,120 @@ function changeArticlePageSize() {
     currentArticleStatus,
     currentArticleCategory,
     currentArticleAuthor,
+    currentDeleteFilter,
   );
+}
+
+// 切换删除筛选
+function changeDeleteFilter() {
+  const filterValue = document.querySelector(
+    'input[name="articleDeleteFilter"]:checked',
+  ).value;
+  currentDeleteFilter = filterValue;
+  currentArticlePage = 1; // 重置为第一页
+
+  // 更新提示信息
+  const filterTip = document.getElementById('filterTip');
+  if (filterValue === 'deleted') {
+    filterTip.textContent = '💡 提示：回收站中的文章可以恢复或永久删除';
+    filterTip.className = 'text-danger ms-3';
+  } else if (filterValue === 'all') {
+    filterTip.textContent = '显示包括已删除在内的所有文章';
+    filterTip.className = 'text-info ms-3';
+  } else {
+    filterTip.textContent = '';
+  }
+
+  loadArticles(
+    currentArticlePage,
+    currentArticlePageSize,
+    currentArticleSearch,
+    currentArticleStatus,
+    currentArticleCategory,
+    currentArticleAuthor,
+    currentDeleteFilter,
+  );
+}
+
+// 恢复文章
+async function restoreArticle(id, title) {
+  if (!confirm(`确定要恢复文章"${title}"吗？`)) {
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/admin/articles/${id}/restore`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    if (response.ok) {
+      alert('文章恢复成功！');
+      loadArticles(
+        currentArticlePage,
+        currentArticlePageSize,
+        currentArticleSearch,
+        currentArticleStatus,
+        currentArticleCategory,
+        currentArticleAuthor,
+        currentDeleteFilter,
+      );
+    } else {
+      const error = await response.json();
+      alert('恢复失败: ' + (error.message || '未知错误'));
+    }
+  } catch (error) {
+    console.error('恢复文章失败:', error);
+    alert('恢复失败，请重试');
+  }
+}
+
+// 永久删除文章
+async function permanentlyDeleteArticle(id, title) {
+  if (
+    !confirm(
+      `⚠️ 警告：永久删除操作不可恢复！\n\n确定要永久删除文章"${title}"吗？\n\n注意：如果文章有评论、收藏或笔记，将无法删除。`,
+    )
+  ) {
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/admin/articles/${id}/permanent`,
+      {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      },
+    );
+
+    if (response.ok) {
+      alert('文章已永久删除');
+      loadArticles(
+        currentArticlePage,
+        currentArticlePageSize,
+        currentArticleSearch,
+        currentArticleStatus,
+        currentArticleCategory,
+        currentArticleAuthor,
+        currentDeleteFilter,
+      );
+    } else {
+      const error = await response.json();
+      alert('永久删除失败: ' + (error.message || '未知错误'));
+    }
+  } catch (error) {
+    console.error('永久删除文章失败:', error);
+    alert('删除失败，请重试');
+  }
 }
 
 // 加载文章列表
@@ -664,13 +781,27 @@ async function loadArticles(
   status = '',
   categoryId = '',
   authorId = '',
+  deleteFilter = 'normal',
 ) {
   try {
-    // 构建查询参数
+    let apiUrl = '';
     const params = new URLSearchParams({
       page: page.toString(),
       limit: pageSize.toString(),
     });
+
+    // 根据删除筛选决定使用哪个API
+    if (deleteFilter === 'deleted') {
+      // 只看已删除 - 使用回收站API
+      apiUrl = `${API_BASE_URL}/admin/articles/deleted/list`;
+    } else {
+      // 正常或全部 - 使用主列表API
+      apiUrl = `${API_BASE_URL}/admin/articles`;
+      // 如果是全部，添加includeDeleted参数
+      if (deleteFilter === 'all') {
+        params.append('includeDeleted', 'true');
+      }
+    }
 
     if (search) {
       params.append('search', search);
@@ -688,7 +819,7 @@ async function loadArticles(
       params.append('authorId', authorId);
     }
 
-    const response = await fetch(`${API_BASE_URL}/admin/articles?${params}`, {
+    const response = await fetch(`${apiUrl}?${params}`, {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -705,41 +836,78 @@ async function loadArticles(
       currentArticleStatus = status;
       currentArticleCategory = categoryId;
       currentArticleAuthor = authorId;
+      currentDeleteFilter = deleteFilter;
+
+      // 更新时间列标题
+      const timeHeader = document.getElementById('timeColumnHeader');
+      if (timeHeader) {
+        timeHeader.textContent =
+          deleteFilter === 'deleted' ? '删除时间' : '创建时间';
+      }
 
       if (data.data && data.data.length > 0) {
         tbody.innerHTML = data.data
-          .map(
-            (article) => `
-                    <tr>
-                        <td>${article.id}</td>
-                        <td>${article.title}</td>
-                        <td>${article.author.name || article.author.email}</td>
-                        <td>${article.category.name}</td>
-                        <td>
-                            <span class="badge ${article.published ? 'bg-success' : 'bg-warning'}">
-                                ${article.published ? '已发布' : '草稿'}
-                            </span>
-                            ${article.featured ? '<span class="badge bg-info ms-1">推荐</span>' : ''}
-                        </td>
-                        <td>${formatDate(article.createdAt)}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary" onclick="editArticle(${article.id})">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteArticle(${article.id})">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                            ${
-                              !article.published
-                                ? `<button class="btn btn-sm btn-outline-success" onclick="publishArticle(${article.id})">
-                                <i class="bi bi-check-circle"></i>
-                            </button>`
-                                : ''
-                            }
-                        </td>
-                    </tr>
-                `,
-          )
+          .map((article) => {
+            const isDeleted =
+              article.deletedAt !== null && article.deletedAt !== undefined;
+            const timeDisplay = isDeleted
+              ? formatDate(article.deletedAt)
+              : formatDate(article.createdAt);
+
+            // 状态标签
+            let statusBadge = '';
+            if (isDeleted) {
+              statusBadge = '<span class="badge bg-danger">已删除</span>';
+            } else {
+              statusBadge = `<span class="badge ${article.published ? 'bg-success' : 'bg-warning'}">
+                    ${article.published ? '已发布' : '草稿'}
+                </span>
+                ${article.featured ? '<span class="badge bg-info ms-1">推荐</span>' : ''}`;
+            }
+
+            // 操作按钮
+            let actionButtons = '';
+            if (isDeleted) {
+              // 已删除 - 显示恢复和永久删除按钮
+              actionButtons = `
+                  <button class="btn btn-sm btn-success" onclick="restoreArticle(${article.id}, '${article.title.replace(/'/g, "\\'")}')">
+                    <i class="bi bi-arrow-counterclockwise"></i> 恢复
+                  </button>
+                  <button class="btn btn-sm btn-danger" onclick="permanentlyDeleteArticle(${article.id}, '${article.title.replace(/'/g, "\\'")}')">
+                    <i class="bi bi-x-circle"></i> 永久删除
+                  </button>
+                `;
+            } else {
+              // 正常 - 显示编辑和删除按钮
+              actionButtons = `
+                  <button class="btn btn-sm btn-outline-primary" onclick="editArticle(${article.id})">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" onclick="deleteArticle(${article.id}, '${article.title.replace(/'/g, "\\'")}')">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                  ${
+                    !article.published
+                      ? `<button class="btn btn-sm btn-outline-success" onclick="publishArticle(${article.id})">
+                          <i class="bi bi-check-circle"></i>
+                        </button>`
+                      : ''
+                  }
+                `;
+            }
+
+            return `
+                <tr>
+                  <td>${article.id}</td>
+                  <td>${article.title}</td>
+                  <td>${article.author.name || article.author.email}</td>
+                  <td>${article.category.name}</td>
+                  <td>${statusBadge}</td>
+                  <td>${timeDisplay}</td>
+                  <td>${actionButtons}</td>
+                </tr>
+              `;
+          })
           .join('');
 
         // 更新分页组件
@@ -1217,8 +1385,8 @@ function enableUser(userId) {
   }
 }
 
-function deleteArticle(articleId) {
-  if (confirm('确定要删除这篇文章吗？')) {
+function deleteArticle(articleId, title) {
+  if (confirm(`确定要删除文章"${title}"吗？\n\n删除后可以在回收站中恢复。`)) {
     fetch(`${API_BASE_URL}/admin/articles/${articleId}`, {
       method: 'DELETE',
       headers: {
@@ -1227,7 +1395,7 @@ function deleteArticle(articleId) {
     })
       .then((response) => {
         if (response.ok) {
-          alert('文章删除成功');
+          alert('文章已移至回收站');
           // 保持当前分页状态重新加载
           loadArticles(
             currentArticlePage,
@@ -1236,6 +1404,7 @@ function deleteArticle(articleId) {
             currentArticleStatus,
             currentArticleCategory,
             currentArticleAuthor,
+            currentDeleteFilter,
           );
         } else {
           alert('删除失败');
@@ -1266,6 +1435,7 @@ function publishArticle(articleId) {
           currentArticleStatus,
           currentArticleCategory,
           currentArticleAuthor,
+          currentDeleteFilter,
         );
       } else {
         alert('发布失败');
