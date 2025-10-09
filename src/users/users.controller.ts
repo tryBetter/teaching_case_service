@@ -343,7 +343,7 @@ export class UsersController {
     }
 
     // 解析Excel文件
-    const users = this.excelService.parseUserExcel(file.buffer);
+    const users = await this.excelService.parseUserExcel(file.buffer);
 
     // 批量创建用户
     return this.usersService.batchCreate(users);

@@ -1,16 +1,18 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import * as XLSX from 'xlsx';
 import { BatchCreateUserDto } from '../dto/batch-create-user.dto';
-import { UserRole } from '../../auth/enums/user-role.enum';
+import { UserRole, ROLE_DESCRIPTIONS } from '../../auth/enums/user-role.enum';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class ExcelService {
+  constructor(private prisma: PrismaService) {}
   /**
    * 解析Excel文件并提取用户数据
    * @param buffer Excel文件的Buffer
    * @returns 用户数据数组
    */
-  parseUserExcel(buffer: Buffer): BatchCreateUserDto[] {
+  async parseUserExcel(buffer: Buffer): Promise<BatchCreateUserDto[]> {
     try {
       // 读取Excel文件
       const workbook = XLSX.read(buffer, { type: 'buffer' });
@@ -89,28 +91,43 @@ export class ExcelService {
           throw new BadRequestException(`第${i + 1}行: 邮箱格式不正确`);
         }
 
-        // 验证角色
-        let role: UserRole = UserRole.STUDENT; // 默认角色
+        // 验证角色并查询角色ID
+        let roleId: number | undefined = undefined;
         if (roleStr) {
           const roleMapping: { [key: string]: UserRole } = {
             管理员: UserRole.ADMIN,
+            超级管理员: UserRole.ADMIN,
             ADMIN: UserRole.ADMIN,
+            教师组长: UserRole.TEACHER_LEADER,
+            TEACHER_LEADER: UserRole.TEACHER_LEADER,
             教师: UserRole.TEACHER,
             TEACHER: UserRole.TEACHER,
+            助教组长: UserRole.ASSISTANT_LEADER,
+            ASSISTANT_LEADER: UserRole.ASSISTANT_LEADER,
             助教: UserRole.ASSISTANT,
             ASSISTANT: UserRole.ASSISTANT,
             学生: UserRole.STUDENT,
             STUDENT: UserRole.STUDENT,
           };
 
-          role = roleMapping[roleStr] || UserRole.STUDENT;
+          const mappedRole = roleMapping[roleStr];
+          if (mappedRole) {
+            // 根据角色枚举值查询数据库中的角色ID
+            const roleName = ROLE_DESCRIPTIONS[mappedRole];
+            const roleRecord = await this.prisma.role.findFirst({
+              where: { name: roleName, isActive: true },
+            });
+            if (roleRecord) {
+              roleId = roleRecord.id;
+            }
+          }
         }
 
         users.push({
           email,
           name: name || undefined,
           password,
-          roleId: role ? parseInt(role) : undefined,
+          roleId,
         });
       }
 
@@ -137,10 +154,10 @@ export class ExcelService {
   generateUserTemplate(): Buffer {
     const headers = ['邮箱', '姓名', '密码', '角色'];
     const sampleData = [
-      ['admin@example.com', '管理员', 'admin123', '管理员'],
-      ['user1@example.com', '张三', 'password123', '学生'],
-      ['user2@example.com', '李四', 'password456', '助教'],
-      ['user3@example.com', '王五', 'password789', '教师'],
+      ['admin@example.com', '管理员', 'admin123', '超级管理员'],
+      ['teacher@example.com', '张老师', 'password123', '教师'],
+      ['assistant@example.com', '李助教', 'password456', '助教'],
+      ['student@example.com', '王同学', 'password789', '学生'],
     ];
 
     const data = [headers, ...sampleData];
