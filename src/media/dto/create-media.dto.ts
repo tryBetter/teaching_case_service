@@ -21,4 +21,25 @@ export class CreateMediaDto {
     required: false,
   })
   articleIds?: number[];
+
+  @ApiProperty({
+    description: '上传者用户ID',
+    example: 1,
+    required: false,
+  })
+  uploaderId?: number;
+
+  @ApiProperty({
+    description: '原始文件名',
+    example: 'image.jpg',
+    required: false,
+  })
+  originalName?: string;
+
+  @ApiProperty({
+    description: '文件大小（字节）',
+    example: 123456,
+    required: false,
+  })
+  size?: number;
 }

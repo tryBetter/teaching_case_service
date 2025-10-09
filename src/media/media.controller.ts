@@ -55,7 +55,14 @@ export class MediaController {
   })
   @RequireTeacherLeaderOrTeacher()
   @Post()
-  create(@Body() createMediaDto: CreateMediaDto) {
+  create(
+    @Body() createMediaDto: CreateMediaDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    // 如果没有指定 uploaderId，使用当前用户ID
+    if (!createMediaDto.uploaderId) {
+      createMediaDto.uploaderId = user.id;
+    }
     return this.mediaService.create(createMediaDto);
   }
 

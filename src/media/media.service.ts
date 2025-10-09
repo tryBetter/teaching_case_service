@@ -32,21 +32,42 @@ export class MediaService {
   }
 
   async findAll(userId?: number) {
+    // 如果指定了userId，查询该用户上传的媒体
+    // 或者与该用户文章关联的媒体
     const where = userId
       ? {
-          articles: {
-            some: {
-              article: {
-                authorId: userId,
+          OR: [
+            // 用户上传的媒体
+            { uploaderId: userId },
+            // 或者与用户文章关联的媒体
+            {
+              articles: {
+                some: {
+                  article: {
+                    authorId: userId,
+                  },
+                },
               },
             },
-          },
+          ],
         }
       : {};
 
     return this.prisma.media.findMany({
       where,
       include: {
+        uploader: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
         articles: {
           include: {
             article: {
@@ -65,6 +86,7 @@ export class MediaService {
           },
         },
       },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
