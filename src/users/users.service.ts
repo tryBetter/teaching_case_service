@@ -69,21 +69,128 @@ export class UsersService {
     });
   }
 
+  /**
+   * 分页查询用户列表（与admin接口统一）
+   */
+  async findAllPaginated(options: {
+    page: number;
+    limit: number;
+    role?: string;
+    search?: string;
+  }) {
+    const { page, limit, role, search } = options;
+    const skip = (page - 1) * limit;
+
+    // 构建查询条件
+    const where: any = {};
+
+    if (role) {
+      where.role = {
+        name: role,
+      };
+    }
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search } },
+        { email: { contains: search } },
+      ];
+    }
+
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          role: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+            },
+          },
+          _count: {
+            select: {
+              articles: true,
+              comments: true,
+              notes: true,
+              favorites: true,
+            },
+          },
+        },
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return {
+      data: users,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
   findOne(id: number) {
     return this.prisma.user.findUnique({
       where: { id },
       include: {
-        role: true,
+        role: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+          },
+        },
       },
     });
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return this.prisma.user.update({ where: { id }, data: updateUserDto });
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    // 如果更新密码，需要加密
+    if (updateUserDto.password) {
+      updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
+    }
+
+    return this.prisma.user.update({
+      where: { id },
+      data: updateUserDto,
+      include: {
+        role: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+          },
+        },
+      },
+    });
   }
 
-  remove(id: number) {
-    return this.prisma.user.delete({ where: { id } });
+  async remove(id: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('用户不存在');
+    }
+
+    await this.prisma.user.delete({ where: { id } });
+
+    return {
+      ...user,
+      message: '用户删除成功',
+    };
   }
 
   /**
@@ -99,13 +206,24 @@ export class UsersService {
       throw new NotFoundException('用户不存在');
     }
 
-    return this.prisma.user.update({
+    const updatedUser = await this.prisma.user.update({
       where: { id },
       data: { status: 'INACTIVE' },
       include: {
-        role: true,
+        role: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+          },
+        },
       },
     });
+
+    return {
+      ...updatedUser,
+      message: '用户已禁用',
+    };
   }
 
   /**
@@ -121,13 +239,24 @@ export class UsersService {
       throw new NotFoundException('用户不存在');
     }
 
-    return this.prisma.user.update({
+    const updatedUser = await this.prisma.user.update({
       where: { id },
       data: { status: 'ACTIVE' },
       include: {
-        role: true,
+        role: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+          },
+        },
       },
     });
+
+    return {
+      ...updatedUser,
+      message: '用户已启用',
+    };
   }
 
   /**

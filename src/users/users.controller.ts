@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
   UseInterceptors,
   UploadedFile,
   Res,
@@ -14,6 +15,7 @@ import {
   ApiTags,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiConsumes,
   ApiBody,
@@ -55,12 +57,77 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
-  @ApiOperation({ summary: '获取所有用户' })
-  @ApiResponse({ status: 200, description: '获取用户列表成功' })
+  @ApiOperation({
+    summary: '获取所有用户',
+    description: '获取用户列表，支持分页和筛选（与admin接口统一）',
+  })
+  @ApiQuery({
+    name: 'page',
+    description: '页码',
+    required: false,
+    type: Number,
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    description: '每页数量',
+    required: false,
+    type: Number,
+    example: 10,
+  })
+  @ApiQuery({
+    name: 'role',
+    description: '角色筛选',
+    required: false,
+    type: String,
+  })
+  @ApiQuery({
+    name: 'search',
+    description: '搜索关键词（姓名或邮箱）',
+    required: false,
+    type: String,
+  })
+  @ApiResponse({
+    status: 200,
+    description: '获取用户列表成功',
+    schema: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: { type: 'object' },
+        },
+        pagination: {
+          type: 'object',
+          properties: {
+            page: { type: 'number' },
+            limit: { type: 'number' },
+            total: { type: 'number' },
+            totalPages: { type: 'number' },
+          },
+        },
+      },
+    },
+  })
   @ApiResponse({ status: 403, description: '权限不足，需要教师或助教角色' })
   @RequirePermissions([Permission.USER_LIST])
   @Get()
-  findAll() {
+  findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('role') role?: string,
+    @Query('search') search?: string,
+  ) {
+    // 如果提供了分页参数，返回分页格式
+    if (page || limit) {
+      return this.usersService.findAllPaginated({
+        page: parseInt(page || '1'),
+        limit: parseInt(limit || '10'),
+        role,
+        search,
+      });
+    }
+    // 否则返回所有用户（向后兼容）
     return this.usersService.findAll();
   }
 
@@ -89,13 +156,79 @@ export class UsersController {
 
   @ApiOperation({ summary: '删除用户' })
   @ApiParam({ name: 'id', description: '用户ID' })
-  @ApiResponse({ status: 200, description: '用户删除成功' })
+  @ApiResponse({
+    status: 200,
+    description: '用户删除成功',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'number' },
+        email: { type: 'string' },
+        name: { type: 'string' },
+        message: { type: 'string', example: '用户删除成功' },
+      },
+    },
+  })
   @ApiResponse({ status: 404, description: '用户不存在' })
   @ApiResponse({ status: 403, description: '权限不足，需要教师角色' })
   @RequireTeacher()
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(+id);
+  }
+
+  @ApiOperation({
+    summary: '禁用用户',
+    description: '禁用用户（软删除），用户将无法登录',
+  })
+  @ApiParam({ name: 'id', description: '用户ID' })
+  @ApiResponse({
+    status: 200,
+    description: '用户禁用成功',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'number' },
+        email: { type: 'string' },
+        name: { type: 'string' },
+        status: { type: 'string', example: 'INACTIVE' },
+        message: { type: 'string', example: '用户已禁用' },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: '用户不存在' })
+  @ApiResponse({ status: 403, description: '权限不足，需要教师角色' })
+  @RequireTeacher()
+  @Patch(':id/disable')
+  disable(@Param('id') id: string) {
+    return this.usersService.disable(+id);
+  }
+
+  @ApiOperation({
+    summary: '启用用户',
+    description: '启用被禁用的用户',
+  })
+  @ApiParam({ name: 'id', description: '用户ID' })
+  @ApiResponse({
+    status: 200,
+    description: '用户启用成功',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'number' },
+        email: { type: 'string' },
+        name: { type: 'string' },
+        status: { type: 'string', example: 'ACTIVE' },
+        message: { type: 'string', example: '用户已启用' },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: '用户不存在' })
+  @ApiResponse({ status: 403, description: '权限不足，需要教师角色' })
+  @RequireTeacher()
+  @Patch(':id/enable')
+  enable(@Param('id') id: string) {
+    return this.usersService.enable(+id);
   }
 
   @ApiOperation({

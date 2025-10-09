@@ -1096,6 +1096,104 @@
       </div>
     </div>
 
+    <!-- 查看媒体模态框 -->
+    <div
+      class="modal fade"
+      id="viewMediaModal"
+      tabindex="-1"
+      aria-labelledby="viewMediaModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="viewMediaModalLabel">查看媒体文件</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <!-- 媒体预览区域 -->
+            <div class="text-center mb-4" id="mediaPreview">
+              <div class="spinner-border" role="status">
+                <span class="visually-hidden">加载中...</span>
+              </div>
+            </div>
+
+            <!-- 媒体信息 -->
+            <div class="row">
+              <div class="col-md-6">
+                <table class="table table-sm">
+                  <tr>
+                    <th style="width: 100px">ID:</th>
+                    <td id="mediaDetailId">-</td>
+                  </tr>
+                  <tr>
+                    <th>文件名:</th>
+                    <td id="mediaDetailName">-</td>
+                  </tr>
+                  <tr>
+                    <th>类型:</th>
+                    <td id="mediaDetailType">-</td>
+                  </tr>
+                  <tr>
+                    <th>大小:</th>
+                    <td id="mediaDetailSize">-</td>
+                  </tr>
+                </table>
+              </div>
+              <div class="col-md-6">
+                <table class="table table-sm">
+                  <tr>
+                    <th style="width: 100px">创建时间:</th>
+                    <td id="mediaDetailCreatedAt">-</td>
+                  </tr>
+                  <tr>
+                    <th>URL:</th>
+                    <td>
+                      <a
+                        id="mediaDetailUrl"
+                        href="#"
+                        target="_blank"
+                        class="text-break"
+                        >-</a
+                      >
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>关联文章:</th>
+                    <td id="mediaDetailArticles">-</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              关闭
+            </button>
+            <a
+              id="mediaDownloadBtn"
+              href="#"
+              class="btn btn-primary"
+              download
+              target="_blank"
+            >
+              <i class="bi bi-download"></i>
+              下载文件
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 编辑文章模态框 -->
     <div
       class="modal fade"

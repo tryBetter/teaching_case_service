@@ -1781,8 +1781,116 @@ function editCategory(categoryId) {
   alert('编辑分类功能待实现');
 }
 
-function viewMedia(mediaId) {
-  alert('查看媒体功能待实现');
+// 查看媒体详情
+async function viewMedia(mediaId) {
+  try {
+    // 获取媒体详情
+    const response = await fetch(
+      `${API_BASE_URL}/admin/media?page=1&limit=1000`,
+      {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      alert('获取媒体信息失败');
+      return;
+    }
+
+    const result = await response.json();
+    const media = result.data.find((m) => m.id === mediaId);
+
+    if (!media) {
+      alert('媒体文件不存在');
+      return;
+    }
+
+    // 更新模态框标题
+    document.getElementById('viewMediaModalLabel').textContent =
+      `查看媒体文件 - ${media.originalName || '未知文件'}`;
+
+    // 填充媒体信息
+    document.getElementById('mediaDetailId').textContent = media.id;
+    document.getElementById('mediaDetailName').textContent =
+      media.originalName || '未知文件';
+    document.getElementById('mediaDetailType').innerHTML =
+      `<span class="badge ${media.type === 'IMAGE' ? 'bg-info' : 'bg-warning'}">${media.type}</span>`;
+
+    // 格式化文件大小
+    const fileSize = media.size
+      ? `${(media.size / 1024).toFixed(2)} KB (${media.size} bytes)`
+      : '未知大小';
+    document.getElementById('mediaDetailSize').textContent = fileSize;
+
+    document.getElementById('mediaDetailCreatedAt').textContent = formatDate(
+      media.createdAt,
+    );
+
+    // URL链接
+    const urlElement = document.getElementById('mediaDetailUrl');
+    urlElement.href = media.url;
+    urlElement.textContent = media.url;
+
+    // 关联文章
+    const articlesHtml =
+      media.articles && media.articles.length > 0
+        ? media.articles
+            .map(
+              (article) =>
+                `<span class="badge bg-secondary me-1">${article.title}</span>`,
+            )
+            .join('')
+        : '<span class="text-muted">无关联文章</span>';
+    document.getElementById('mediaDetailArticles').innerHTML = articlesHtml;
+
+    // 下载按钮
+    const downloadBtn = document.getElementById('mediaDownloadBtn');
+    downloadBtn.href = media.url;
+    downloadBtn.download = media.originalName || 'download';
+
+    // 显示媒体预览
+    const previewDiv = document.getElementById('mediaPreview');
+    if (media.type === 'IMAGE') {
+      // 图片预览
+      previewDiv.innerHTML = `
+        <img 
+          src="${media.url}" 
+          alt="${media.originalName || '图片'}" 
+          style="max-width: 100%; max-height: 400px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
+          onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22><text x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22>图片加载失败</text></svg>';"
+        />
+      `;
+    } else if (media.type === 'VIDEO') {
+      // 视频预览
+      previewDiv.innerHTML = `
+        <video 
+          controls 
+          style="max-width: 100%; max-height: 400px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
+        >
+          <source src="${media.url}" type="video/mp4">
+          您的浏览器不支持视频播放
+        </video>
+      `;
+    } else {
+      previewDiv.innerHTML = `
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle"></i>
+          无法预览此类型的文件
+        </div>
+      `;
+    }
+
+    // 显示模态框
+    const modal = new bootstrap.Modal(
+      document.getElementById('viewMediaModal'),
+    );
+    modal.show();
+  } catch (error) {
+    console.error('查看媒体失败:', error);
+    alert('获取媒体信息失败');
+  }
 }
 
 function viewRolePermissions(roleId) {

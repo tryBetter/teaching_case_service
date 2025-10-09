@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
+import { normalizeRoleName } from './enums/user-role.enum';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -32,7 +33,7 @@ export class AuthService {
       const { password: _password, ...result } = user;
       return {
         ...result,
-        role: result.role.name,
+        role: normalizeRoleName(result.role.name), // 转换为枚举值
       };
     }
     return null;
