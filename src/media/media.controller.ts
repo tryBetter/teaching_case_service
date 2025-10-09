@@ -181,6 +181,7 @@ export class MediaController {
   async uploadFile(
     @UploadedFile() file: UploadedFileInterface,
     @Body() uploadMediaDto: UploadMediaDto,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     if (!file) {
       throw new BadRequestException('请选择要上传的文件');
@@ -220,7 +221,11 @@ export class MediaController {
       throw new BadRequestException('视频文件大小不能超过 1024MB');
     }
 
-    return this.mediaService.uploadFile(file, uploadMediaDto.articleIds);
+    return this.mediaService.uploadFile(
+      file,
+      uploadMediaDto.articleIds,
+      user.id,
+    );
   }
 
   @ApiOperation({ summary: '获取所有媒体文件' })

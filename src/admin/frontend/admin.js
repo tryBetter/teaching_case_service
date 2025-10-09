@@ -1000,12 +1000,20 @@ async function loadMedia() {
               ? formatFileSize(media.size)
               : '未知大小';
 
+            // 处理上传者信息
+            const uploaderInfo = media.uploader
+              ? `<div><strong>${media.uploader.name || '未知用户'}</strong></div>
+                 <div class="text-muted small">${media.uploader.email || '-'}</div>
+                 <div><span class="badge bg-secondary">${media.uploader.role?.name || '-'}</span></div>`
+              : '<span class="text-muted">未知</span>';
+
             return `
                     <tr>
                         <td>${media.id}</td>
                         <td>${fileName}</td>
                         <td><span class="badge ${media.type === 'IMAGE' ? 'bg-info' : 'bg-warning'}">${media.type}</span></td>
                         <td>${fileSize}</td>
+                        <td>${uploaderInfo}</td>
                         <td>${formatDate(media.createdAt)}</td>
                         <td>
                             <button class="btn btn-sm btn-outline-primary" onclick="viewMedia(${media.id})">
@@ -1021,13 +1029,13 @@ async function loadMedia() {
           .join('');
       } else {
         tbody.innerHTML =
-          '<tr><td colspan="6" class="text-center text-muted">暂无数据</td></tr>';
+          '<tr><td colspan="7" class="text-center text-muted">暂无数据</td></tr>';
       }
     }
   } catch (error) {
     console.error('加载媒体列表失败:', error);
     document.getElementById('mediaTableBody').innerHTML =
-      '<tr><td colspan="6" class="text-center text-danger">加载失败</td></tr>';
+      '<tr><td colspan="7" class="text-center text-danger">加载失败</td></tr>';
   }
 }
 
@@ -1784,23 +1792,21 @@ function editCategory(categoryId) {
 // 查看媒体详情
 async function viewMedia(mediaId) {
   try {
-    // 获取媒体详情
-    const response = await fetch(
-      `${API_BASE_URL}/admin/media?page=1&limit=1000`,
-      {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
+    // 获取媒体详情（使用单个媒体接口）
+    const response = await fetch(`${API_BASE_URL}/admin/media/${mediaId}`, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
       },
-    );
+    });
 
     if (!response.ok) {
-      alert('获取媒体信息失败');
+      const errorText = await response.text();
+      console.error('获取媒体信息失败:', response.status, errorText);
+      alert(`获取媒体信息失败: ${response.status}`);
       return;
     }
 
-    const result = await response.json();
-    const media = result.data.find((m) => m.id === mediaId);
+    const media = await response.json();
 
     if (!media) {
       alert('媒体文件不存在');
@@ -1823,6 +1829,18 @@ async function viewMedia(mediaId) {
       ? `${(media.size / 1024).toFixed(2)} KB (${media.size} bytes)`
       : '未知大小';
     document.getElementById('mediaDetailSize').textContent = fileSize;
+
+    // 填充上传者信息
+    const uploaderElement = document.getElementById('mediaDetailUploader');
+    if (media.uploader) {
+      uploaderElement.innerHTML = `
+        <div><strong>${media.uploader.name || '未知用户'}</strong></div>
+        <div class="text-muted small">${media.uploader.email || '-'}</div>
+        <div><span class="badge bg-secondary">${media.uploader.role?.name || '-'}</span></div>
+      `;
+    } else {
+      uploaderElement.textContent = '未知';
+    }
 
     document.getElementById('mediaDetailCreatedAt').textContent = formatDate(
       media.createdAt,

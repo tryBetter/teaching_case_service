@@ -103,6 +103,50 @@ export class AdminMediaController {
   }
 
   @ApiOperation({
+    summary: '获取单个媒体文件详情',
+    description: '超级管理员获取指定媒体文件的详细信息，包括关联的文章',
+  })
+  @ApiParam({ name: 'id', description: '媒体文件ID' })
+  @ApiResponse({
+    status: 200,
+    description: '返回媒体文件详情',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'number' },
+        type: { type: 'string', enum: ['IMAGE', 'VIDEO'] },
+        url: { type: 'string' },
+        originalName: { type: 'string' },
+        size: { type: 'number' },
+        createdAt: { type: 'string', format: 'date-time' },
+        articles: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'number' },
+              title: { type: 'string' },
+              author: {
+                type: 'object',
+                properties: {
+                  id: { type: 'number' },
+                  name: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: '媒体文件不存在' })
+  @RequireSuperAdmin()
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    return this.adminMediaService.findOne(+id);
+  }
+
+  @ApiOperation({
     summary: '删除媒体文件',
     description: '超级管理员删除媒体文件',
   })

@@ -37,6 +37,7 @@ model User {
   favorites Favorite[]
   notes     Note[]
   commentLikes CommentLike[]
+  uploadedMedia Media[] // 用户上传的媒体文件
 
   // 教师-助教关联关系
   teacherAssistants TeacherAssistant[] @relation("TeacherAssistants") // 作为教师时的助教列表
@@ -79,6 +80,10 @@ model Media {
   originalName String?  // 原始文件名
   size         Int?     // 文件大小（字节）
   createdAt    DateTime @default(now())
+
+  // 上传者关联
+  uploader   User? @relation(fields: [uploaderId], references: [id])
+  uploaderId Int?
 
   // 多对多关系：一个媒体文件可以关联多个文章
   articles  ArticleMedia[]

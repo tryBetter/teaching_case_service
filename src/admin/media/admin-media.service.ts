@@ -94,6 +94,18 @@ export class AdminMediaService {
         take: limit,
         orderBy,
         include: {
+          uploader: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
           articles: {
             select: {
               id: true,
@@ -117,11 +129,20 @@ export class AdminMediaService {
     ]);
 
     // 格式化返回数据
-    const formattedMedia = media.map((item) => ({
-      ...item,
-      articleCount: item.articles.length,
-      articles: item.articles.map((art) => art.article),
-    }));
+    const formattedMedia = media.map((item) => {
+      const articlesList = item.articles as Array<{
+        article: {
+          id: number;
+          title: string;
+          author: { id: number; name: string };
+        };
+      }>;
+      return {
+        ...item,
+        articleCount: articlesList.length,
+        articles: articlesList.map((art) => art.article),
+      };
+    });
 
     return {
       data: formattedMedia,
@@ -144,6 +165,61 @@ export class AdminMediaService {
         sortOrder,
       },
     };
+  }
+
+  async findOne(id: number) {
+    const media = await this.prisma.media.findUnique({
+      where: { id },
+      include: {
+        uploader: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+        articles: {
+          include: {
+            article: {
+              select: {
+                id: true,
+                title: true,
+                author: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!media) {
+      throw new Error('媒体文件不存在');
+    }
+
+    // 转换关联文章数据格式
+    const articlesList = media.articles as Array<{
+      article: {
+        id: number;
+        title: string;
+        author: { id: number; name: string };
+      };
+    }>;
+    const formattedMedia = {
+      ...media,
+      articles: articlesList.map((am) => am.article),
+    };
+
+    return formattedMedia;
   }
 
   async remove(id: number) {

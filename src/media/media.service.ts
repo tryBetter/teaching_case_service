@@ -135,7 +135,11 @@ export class MediaService {
     });
   }
 
-  async uploadFile(file: UploadedFileInterface, articleIds?: number[]) {
+  async uploadFile(
+    file: UploadedFileInterface,
+    articleIds?: number[],
+    uploaderId?: number,
+  ) {
     // 确定文件类型和存储目录
     const fileMimetype = file.mimetype;
     const isImage = fileMimetype.startsWith('image/');
@@ -181,6 +185,9 @@ export class MediaService {
       data: {
         type: mediaType,
         url: fileUrl,
+        originalName: file.originalname,
+        size: file.size,
+        uploaderId, // 记录上传者ID
       },
     });
 
