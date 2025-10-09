@@ -6,6 +6,7 @@ import { CreateUserDto } from '../../users/dto/create-user.dto';
 import { UpdateUserDto } from '../../users/dto/update-user.dto';
 import { BatchCreateUserResult } from '../../users/dto/batch-create-user.dto';
 import type { Response } from 'express';
+import type { Prisma } from '../../../generated/prisma';
 
 @Injectable()
 export class AdminUsersService {
@@ -25,7 +26,7 @@ export class AdminUsersService {
     const skip = (page - 1) * limit;
 
     // 构建查询条件
-    const where: any = {};
+    const where: Prisma.UserWhereInput = {};
 
     if (role) {
       where.role = {
@@ -233,7 +234,7 @@ export class AdminUsersService {
     return this.usersService.batchCreate(users);
   }
 
-  async downloadTemplate(res: Response) {
+  downloadTemplate(res: Response) {
     const templateBuffer = this.excelService.generateUserTemplate();
 
     // 使用URL编码处理中文文件名

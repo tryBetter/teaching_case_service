@@ -6,6 +6,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AdminLoginDto } from './dto/admin-login.dto';
+import { UserRole, normalizeRoleName } from '../../auth/enums/user-role.enum';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -25,8 +26,8 @@ export class AdminAuthService {
       throw new UnauthorizedException('邮箱或密码错误');
     }
 
-    // 检查是否为超级管理员角色
-    if (user.role !== '超级管理员') {
+    // 检查是否为超级管理员角色（使用英文枚举值）
+    if (user.role !== UserRole.ADMIN) {
       throw new ForbiddenException(
         '权限不足，只有超级管理员才能登录后台管理系统',
       );
@@ -53,7 +54,7 @@ export class AdminAuthService {
 
   async checkSuperAdminStatus(token: string) {
     try {
-      const payload = this.jwtService.verify(token);
+      const payload: { sub: number } = this.jwtService.verify(token);
 
       // 从数据库验证用户信息
       const user = await this.prisma.user.findUnique({
@@ -67,7 +68,7 @@ export class AdminAuthService {
         throw new UnauthorizedException('用户不存在');
       }
 
-      const isSuperAdmin = user.role.name === '超级管理员';
+      const isSuperAdmin = normalizeRoleName(user.role.name) === UserRole.ADMIN;
 
       return {
         isSuperAdmin,
@@ -75,7 +76,7 @@ export class AdminAuthService {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role.name,
+          role: normalizeRoleName(user.role.name), // 转换为英文枚举值
         },
       };
     } catch (error) {
@@ -90,7 +91,7 @@ export class AdminAuthService {
     id: number;
     email: string;
     name: string | null;
-    role: string;
+    role: UserRole;
     roleId: number;
   } | null> {
     console.log(`尝试登录: ${email}`);
@@ -116,7 +117,7 @@ export class AdminAuthService {
       const { password: _password, ...result } = user;
       return {
         ...result,
-        role: result.role.name,
+        role: normalizeRoleName(result.role.name), // 转换为英文枚举值
       };
     }
     return null;

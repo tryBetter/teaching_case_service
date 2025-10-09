@@ -11,6 +11,7 @@ import { AssignPermissionsDto } from './dto/assign-permissions.dto';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
 import { CreateTeacherAssistantDto } from './dto/create-teacher-assistant.dto';
+import { UserRole, normalizeRoleName } from '../auth/enums/user-role.enum';
 
 export interface CreatedPermission {
   id: number;
@@ -648,12 +649,12 @@ export class RolesService {
       throw new NotFoundException('助教不存在');
     }
 
-    // 验证角色：教师和助教
-    if (teacher.role.name !== '教师') {
+    // 验证角色：教师和助教（使用英文枚举值比较）
+    if (normalizeRoleName(teacher.role.name) !== UserRole.TEACHER) {
       throw new ConflictException('指定用户不是教师角色');
     }
 
-    if (assistant.role.name !== '助教') {
+    if (normalizeRoleName(assistant.role.name) !== UserRole.ASSISTANT) {
       throw new ConflictException('指定用户不是助教角色');
     }
 
@@ -736,7 +737,7 @@ export class RolesService {
       throw new NotFoundException('助教不存在');
     }
 
-    if (assistant.role.name !== '助教') {
+    if (normalizeRoleName(assistant.role.name) !== UserRole.ASSISTANT) {
       throw new ConflictException('指定用户不是助教角色');
     }
 
@@ -764,7 +765,7 @@ export class RolesService {
       throw new NotFoundException('教师不存在');
     }
 
-    if (teacher.role.name !== '教师') {
+    if (normalizeRoleName(teacher.role.name) !== UserRole.TEACHER) {
       throw new ConflictException('指定用户不是教师角色');
     }
 
@@ -810,8 +811,8 @@ export class RolesService {
       return false;
     }
 
-    // 如果是助教组长，可以访问所有教师的资源
-    if (assistant.role.name === '助教组长') {
+    // 如果是助教组长，可以访问所有教师的资源（使用英文枚举值比较）
+    if (normalizeRoleName(assistant.role.name) === UserRole.ASSISTANT_LEADER) {
       return true;
     }
 

@@ -7,6 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { JwtAuthGuard } from '../../auth/auth.guard';
 import { SUPER_ADMIN_KEY } from '../decorators/super-admin.decorator';
+import { UserRole } from '../../auth/enums/user-role.enum';
 
 @Injectable()
 export class SuperAdminGuard implements CanActivate {
@@ -31,15 +32,17 @@ export class SuperAdminGuard implements CanActivate {
     }
 
     // 获取用户信息
-    const request = context.switchToHttp().getRequest();
-    const user = request.user;
+    const request: { user: { role: UserRole } } = context
+      .switchToHttp()
+      .getRequest();
+    const user: { role: UserRole } = request.user;
 
     if (!user) {
       throw new ForbiddenException('用户信息不存在');
     }
 
-    // 检查用户角色是否为超级管理员
-    if (user.role !== '超级管理员') {
+    // 检查用户角色是否为超级管理员（使用英文枚举值）
+    if (user.role !== UserRole.ADMIN) {
       throw new ForbiddenException('权限不足，需要超级管理员权限');
     }
 

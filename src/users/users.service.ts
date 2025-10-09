@@ -10,6 +10,8 @@ import {
   BatchCreateUserResult,
 } from './dto/batch-create-user.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import type { Prisma } from '../../generated/prisma';
+import { UserRole, normalizeRoleName } from '../auth/enums/user-role.enum';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -53,7 +55,7 @@ export class UsersService {
     });
 
     // 如果创建的是教师，自动关联所有助教组长
-    if (user.role.name === '教师') {
+    if (normalizeRoleName(user.role.name) === UserRole.TEACHER) {
       await this.associateTeacherWithAssistantLeaders(user.id);
     }
 
@@ -82,7 +84,7 @@ export class UsersService {
     const skip = (page - 1) * limit;
 
     // 构建查询条件
-    const where: any = {};
+    const where: Prisma.UserWhereInput = {};
 
     if (role) {
       where.role = {

@@ -8,6 +8,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { RolesService } from '../../roles/roles.service';
 import { REQUIRE_TEACHER_ASSISTANT_RELATION } from '../decorators/teacher-assistant.decorator';
+import { UserRole } from '../enums/user-role.enum';
 
 @Injectable()
 export class TeacherAssistantGuard implements CanActivate {
@@ -26,15 +27,20 @@ export class TeacherAssistantGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
-    const user = request.user;
+    const request: {
+      user: { role: UserRole; userId: number };
+      params?: { teacherId?: string };
+      query?: { teacherId?: string };
+      body?: { authorId?: number; teacherId?: number };
+    } = context.switchToHttp().getRequest();
+    const user: { role: UserRole; userId: number } = request.user;
 
     if (!user) {
       throw new ForbiddenException('用户未认证');
     }
 
-    // 如果用户不是助教角色，直接通过
-    if (user.role !== '助教') {
+    // 如果用户不是助教角色，直接通过（使用英文枚举值）
+    if (user.role !== UserRole.ASSISTANT) {
       return true;
     }
 
@@ -59,7 +65,11 @@ export class TeacherAssistantGuard implements CanActivate {
     return true;
   }
 
-  private extractTeacherId(request: any): number | null {
+  private extractTeacherId(request: {
+    params?: { teacherId?: string };
+    query?: { teacherId?: string };
+    body?: { authorId?: number; teacherId?: number };
+  }): number | null {
     // 从路径参数中获取教师ID
     if (request.params?.teacherId) {
       return parseInt(request.params.teacherId, 10);
@@ -72,12 +82,12 @@ export class TeacherAssistantGuard implements CanActivate {
 
     // 从请求体中获取教师ID（如果是创建文章等情况）
     if (request.body?.authorId) {
-      return parseInt(request.body.authorId, 10);
+      return request.body.authorId;
     }
 
     // 从请求体中获取教师ID（如果是媒体上传等情况）
     if (request.body?.teacherId) {
-      return parseInt(request.body.teacherId, 10);
+      return request.body.teacherId;
     }
 
     return null;
