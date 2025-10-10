@@ -35,16 +35,22 @@ import {
   RequireTeacherLeaderOrTeacher,
   RequireTeacherLeaderOrTeacherOrAssistantLeaderOrAssistant,
 } from '../auth/decorators/roles.decorator';
+import { RequireSuperAdmin } from '../admin/decorators/super-admin.decorator';
+import { SuperAdminGuard } from '../admin/guards/super-admin.guard';
 import { Permission } from '../auth/enums/permissions.enum';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { UseGuards } from '@nestjs/common';
+import { AdminMediaService } from '../admin/media/admin-media.service';
 
 @ApiTags('媒体管理')
 @ApiBearerAuth('JWT-auth')
 @Controller('media')
-@UseGuards(RolesGuard)
+@UseGuards(RolesGuard, SuperAdminGuard)
 export class MediaController {
-  constructor(private readonly mediaService: MediaService) {}
+  constructor(
+    private readonly mediaService: MediaService,
+    private readonly adminMediaService: AdminMediaService,
+  ) {}
 
   @ApiOperation({ summary: '创建媒体文件' })
   @ApiResponse({ status: 201, description: '媒体文件创建成功' })
@@ -242,18 +248,66 @@ export class MediaController {
     required: false,
     type: Number,
   })
-  @Public()
+  @ApiQuery({
+    name: 'page',
+    description: '页码',
+    required: false,
+    type: Number,
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    description: '每页数量',
+    required: false,
+    type: Number,
+    example: 10,
+  })
   @ApiResponse({ status: 200, description: '获取媒体文件列表成功' })
+  @ApiResponse({ status: 401, description: '未授权' })
   @Get()
-  findAll(@Query('userId') userId?: string) {
-    return this.mediaService.findAll(userId ? +userId : undefined);
+  findAll(
+    @Query('userId') userId?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.mediaService.findAll({
+      userId: userId ? +userId : undefined,
+      page: page ? +page : undefined,
+      limit: limit ? +limit : undefined,
+    });
+  }
+
+  @ApiOperation({ summary: '获取媒体统计信息（管理员）' })
+  @ApiResponse({ status: 200, description: '返回媒体统计信息' })
+  @RequireSuperAdmin()
+  @Get('stats/overview')
+  async getMediaStats() {
+    return this.adminMediaService.getMediaStats();
+  }
+
+  @ApiOperation({ summary: '获取媒体类型分布统计（管理员）' })
+  @ApiResponse({ status: 200, description: '返回媒体类型分布统计' })
+  @RequireSuperAdmin()
+  @Get('stats/distribution')
+  async getMediaTypeDistribution() {
+    return this.adminMediaService.getMediaTypeDistribution();
+  }
+
+  @ApiOperation({ summary: '获取最近上传的媒体文件（管理员）' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+  @ApiResponse({ status: 200, description: '返回最近上传的媒体文件列表' })
+  @RequireSuperAdmin()
+  @Get('recent')
+  async getRecentMedia(@Query('limit') limit?: string) {
+    const limitNum = limit ? parseInt(limit) : 10;
+    return this.adminMediaService.getRecentMedia(limitNum);
   }
 
   @ApiOperation({ summary: '根据ID获取媒体文件' })
   @ApiParam({ name: 'id', description: '媒体文件ID' })
   @ApiResponse({ status: 200, description: '获取媒体文件成功' })
-  @Public()
   @ApiResponse({ status: 404, description: '媒体文件不存在' })
+  @ApiResponse({ status: 401, description: '未授权' })
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.mediaService.findOne(+id);
@@ -272,6 +326,42 @@ export class MediaController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateMediaDto: UpdateMediaDto) {
     return this.mediaService.update(+id, updateMediaDto);
+  }
+
+  // ==================== 管理员专用功能 ====================
+
+  @ApiOperation({ summary: '批量删除媒体文件（管理员）' })
+  @ApiQuery({
+    name: 'ids',
+    description: '媒体ID列表（逗号分隔）',
+    example: '1,2,3',
+  })
+  @ApiResponse({ status: 200, description: '返回删除结果' })
+  @RequireSuperAdmin()
+  @Delete('batch')
+  async batchRemove(@Query('ids') ids: string) {
+    const idList = ids
+      .split(',')
+      .map((id) => parseInt(id.trim()))
+      .filter((id) => !isNaN(id));
+    const results = {
+      deletedCount: 0,
+      failedCount: 0,
+      errors: [] as string[],
+    };
+
+    for (const id of idList) {
+      try {
+        await this.mediaService.remove(id);
+        results.deletedCount++;
+      } catch (error) {
+        results.failedCount++;
+        const message = error instanceof Error ? error.message : String(error);
+        results.errors.push(`ID ${id}: ${message}`);
+      }
+    }
+
+    return results;
   }
 
   @ApiOperation({ summary: '删除媒体文件' })

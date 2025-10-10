@@ -58,35 +58,67 @@ export class NoteService {
   /**
    * 获取用户的所有笔记
    * @param userId 用户ID
+   * @param options 分页选项
    * @returns 用户笔记列表
    */
-  async findAll(userId: number) {
-    return this.prisma.note.findMany({
-      where: { userId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
+  async findAll(userId?: number, options?: { page?: number; limit?: number }) {
+    const { page, limit } = options || {};
+    const where = userId ? { userId } : {};
+
+    const include = {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
         },
-        article: {
-          select: {
-            id: true,
-            title: true,
-            content: true,
-            published: true,
-            createdAt: true,
-            author: {
-              select: {
-                id: true,
-                name: true,
-              },
+      },
+      article: {
+        select: {
+          id: true,
+          title: true,
+          content: true,
+          published: true,
+          createdAt: true,
+          author: {
+            select: {
+              id: true,
+              name: true,
             },
           },
         },
       },
+    };
+
+    // 如果提供了分页参数，返回分页数据
+    if (page && limit) {
+      const skip = (page - 1) * limit;
+      const [data, total] = await Promise.all([
+        this.prisma.note.findMany({
+          where,
+          include,
+          orderBy: { updatedAt: 'desc' },
+          skip,
+          take: limit,
+        }),
+        this.prisma.note.count({ where }),
+      ]);
+
+      return {
+        data,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    }
+
+    // 否则返回所有数据（保持向后兼容）
+    return this.prisma.note.findMany({
+      where,
+      include,
       orderBy: {
         updatedAt: 'desc',
       },

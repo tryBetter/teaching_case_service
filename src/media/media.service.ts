@@ -31,7 +31,9 @@ export class MediaService {
     return media;
   }
 
-  async findAll(userId?: number) {
+  async findAll(options?: { userId?: number; page?: number; limit?: number }) {
+    const { userId, page, limit } = options || {};
+
     // 如果指定了userId，查询该用户上传的媒体
     // 或者与该用户文章关联的媒体
     const where = userId
@@ -53,39 +55,67 @@ export class MediaService {
         }
       : {};
 
-    return this.prisma.media.findMany({
-      where,
-      include: {
-        uploader: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: {
-              select: {
-                name: true,
-              },
+    const include = {
+      uploader: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: {
+            select: {
+              name: true,
             },
           },
         },
-        articles: {
-          include: {
-            article: {
-              select: {
-                id: true,
-                title: true,
-                author: {
-                  select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                  },
+      },
+      articles: {
+        include: {
+          article: {
+            select: {
+              id: true,
+              title: true,
+              author: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
                 },
               },
             },
           },
         },
       },
+    };
+
+    // 如果提供了分页参数，返回分页数据
+    if (page && limit) {
+      const skip = (page - 1) * limit;
+      const [data, total] = await Promise.all([
+        this.prisma.media.findMany({
+          where,
+          include,
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+        }),
+        this.prisma.media.count({ where }),
+      ]);
+
+      return {
+        data,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    }
+
+    // 否则返回所有数据（保持向后兼容）
+    return this.prisma.media.findMany({
+      where,
+      include,
       orderBy: { createdAt: 'desc' },
     });
   }

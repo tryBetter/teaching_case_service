@@ -31,27 +31,35 @@ import { ExcelService } from './services/excel.service';
 import {
   RequirePermissions,
   RequireTeacher,
+  RequireAdmin,
 } from '../auth/decorators/roles.decorator';
 import { Permission } from '../auth/enums/permissions.enum';
 import { UseGuards } from '@nestjs/common';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { PrismaService } from '../prisma/prisma.service';
+import { RequireSuperAdmin } from '../admin/decorators/super-admin.decorator';
+import { SuperAdminGuard } from '../admin/guards/super-admin.guard';
 
 @ApiTags('用户管理')
 @ApiBearerAuth('JWT-auth')
 @Controller('users')
-@UseGuards(RolesGuard)
+@UseGuards(RolesGuard, SuperAdminGuard)
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly excelService: ExcelService,
+    private readonly prisma: PrismaService,
   ) {}
 
   @ApiOperation({ summary: '创建用户' })
   @ApiResponse({ status: 201, description: '用户创建成功' })
   @ApiResponse({ status: 400, description: '请求参数错误' })
   @ApiResponse({ status: 409, description: '邮箱已存在' })
-  @ApiResponse({ status: 403, description: '权限不足，需要教师角色' })
-  @RequirePermissions([Permission.USER_CREATE])
+  @ApiResponse({
+    status: 403,
+    description: '权限不足，需要管理员或超级管理员角色',
+  })
+  @RequireAdmin()
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
@@ -131,6 +139,94 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @ApiOperation({
+    summary: '下载用户导入模板',
+    description: '下载Excel格式的用户导入模板文件，包含示例数据。',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '模板文件下载成功',
+  })
+  @ApiResponse({
+    status: 403,
+    description: '权限不足，需要管理员或超级管理员角色',
+  })
+  @RequireAdmin()
+  @Get('template')
+  downloadTemplate(@Res() res: Response) {
+    try {
+      const templateBuffer = this.excelService.generateUserTemplate();
+
+      // 使用 RFC 5987 编码格式处理中文文件名
+      const filename = encodeURIComponent('用户导入模板.xlsx');
+
+      res.set({
+        'Content-Type':
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': `attachment; filename="user-template.xlsx"; filename*=UTF-8''${filename}`,
+        'Content-Length': templateBuffer.length.toString(),
+      });
+
+      res.send(templateBuffer);
+    } catch (error) {
+      console.error('生成模板失败:', error);
+      res.status(500).json({
+        statusCode: 500,
+        message: '生成模板失败',
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  @ApiOperation({
+    summary: '获取角色选项列表',
+    description:
+      '获取所有可用角色的简化列表（不包含超级管理员），用于用户创建/编辑时的角色下拉选择',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '获取角色列表成功',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'number', example: 3, description: '角色ID' },
+          name: { type: 'string', example: '教师', description: '角色名称' },
+        },
+      },
+    },
+  })
+  @RequireSuperAdmin()
+  @Get('roles')
+  async findRoles() {
+    return this.prisma.role.findMany({
+      where: {
+        isActive: true,
+        name: { not: '超级管理员' }, // 排除超级管理员角色
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  @ApiOperation({
+    summary: '获取用户统计信息',
+    description: '获取用户相关的统计数据，包括总数、角色分布、新增用户等',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '返回用户统计信息',
+  })
+  @RequireSuperAdmin()
+  @Get('stats')
+  async getUserStats() {
+    return this.usersService.getUserStats();
+  }
+
   @ApiOperation({ summary: '根据ID获取用户' })
   @ApiParam({ name: 'id', description: '用户ID' })
   @ApiResponse({ status: 200, description: '获取用户成功' })
@@ -147,8 +243,11 @@ export class UsersController {
   @ApiResponse({ status: 200, description: '用户更新成功' })
   @ApiResponse({ status: 404, description: '用户不存在' })
   @ApiResponse({ status: 400, description: '请求参数错误' })
-  @ApiResponse({ status: 403, description: '权限不足' })
-  @RequirePermissions([Permission.USER_UPDATE])
+  @ApiResponse({
+    status: 403,
+    description: '权限不足，需要管理员或超级管理员角色',
+  })
+  @RequireAdmin()
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(+id, updateUserDto);
@@ -170,8 +269,11 @@ export class UsersController {
     },
   })
   @ApiResponse({ status: 404, description: '用户不存在' })
-  @ApiResponse({ status: 403, description: '权限不足，需要教师角色' })
-  @RequireTeacher()
+  @ApiResponse({
+    status: 403,
+    description: '权限不足，需要管理员或超级管理员角色',
+  })
+  @RequireAdmin()
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(+id);
@@ -197,8 +299,11 @@ export class UsersController {
     },
   })
   @ApiResponse({ status: 404, description: '用户不存在' })
-  @ApiResponse({ status: 403, description: '权限不足，需要教师角色' })
-  @RequireTeacher()
+  @ApiResponse({
+    status: 403,
+    description: '权限不足，需要管理员或超级管理员角色',
+  })
+  @RequireAdmin()
   @Patch(':id/disable')
   disable(@Param('id') id: string) {
     return this.usersService.disable(+id);
@@ -224,8 +329,11 @@ export class UsersController {
     },
   })
   @ApiResponse({ status: 404, description: '用户不存在' })
-  @ApiResponse({ status: 403, description: '权限不足，需要教师角色' })
-  @RequireTeacher()
+  @ApiResponse({
+    status: 403,
+    description: '权限不足，需要管理员或超级管理员角色',
+  })
+  @RequireAdmin()
   @Patch(':id/enable')
   enable(@Param('id') id: string) {
     return this.usersService.enable(+id);
@@ -320,9 +428,9 @@ export class UsersController {
   })
   @ApiResponse({
     status: 403,
-    description: '权限不足，需要教师角色',
+    description: '权限不足，需要管理员或超级管理员角色',
   })
-  @RequireTeacher()
+  @RequireAdmin()
   @Post('batch')
   @UseInterceptors(FileInterceptor('file'))
   async batchCreate(
@@ -347,43 +455,5 @@ export class UsersController {
 
     // 批量创建用户
     return this.usersService.batchCreate(users);
-  }
-
-  @ApiOperation({
-    summary: '下载用户导入模板',
-    description: '下载Excel格式的用户导入模板文件，包含示例数据。',
-  })
-  @ApiResponse({
-    status: 200,
-    description: '模板文件下载成功',
-    headers: {
-      'Content-Type': {
-        description:
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        schema: { type: 'string' },
-      },
-      'Content-Disposition': {
-        description: 'attachment; filename="用户导入模板.xlsx"',
-        schema: { type: 'string' },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 403,
-    description: '权限不足，需要教师角色',
-  })
-  @RequireTeacher()
-  @Get('template')
-  downloadTemplate(@Res() res: Response) {
-    const templateBuffer = this.excelService.generateUserTemplate();
-
-    res.set({
-      'Content-Type':
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'Content-Disposition': 'attachment; filename="用户导入模板.xlsx"',
-      'Content-Length': templateBuffer.length.toString(),
-    });
-
-    res.send(templateBuffer);
   }
 }

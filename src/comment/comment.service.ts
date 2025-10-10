@@ -26,7 +26,13 @@ export class CommentService {
    * @param currentUserId 当前用户ID，用于判断是否已点赞
    * @returns 评论列表
    */
-  async findAll(articleId?: number, authorId?: number, currentUserId?: number) {
+  async findAll(
+    articleId?: number,
+    authorId?: number,
+    currentUserId?: number,
+    options?: { page?: number; limit?: number },
+  ) {
+    const { page, limit } = options || {};
     const where: {
       articleId?: number;
       authorId?: number;
@@ -40,56 +46,117 @@ export class CommentService {
       where.authorId = authorId;
     }
 
-    const comments = await this.prisma.comment.findMany({
-      where,
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
+    const include = {
+      author: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
         },
-        article: {
-          select: {
-            id: true,
-            title: true,
-          },
+      },
+      article: {
+        select: {
+          id: true,
+          title: true,
         },
-        replies: {
-          include: {
-            author: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
+      },
+      replies: {
+        include: {
+          author: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
             },
-            likes: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                  },
+          },
+          likes: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
                 },
               },
             },
           },
         },
-        likes: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
+      },
+      likes: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
             },
           },
         },
       },
+    };
+
+    // 如果提供了分页参数，返回分页数据
+    if (page && limit) {
+      const skip = (page - 1) * limit;
+      const [comments, total] = await Promise.all([
+        this.prisma.comment.findMany({
+          where,
+          include,
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+        }),
+        this.prisma.comment.count({ where }),
+      ]);
+
+      // 为每个评论添加点赞统计和当前用户点赞状态
+      const data = await Promise.all(
+        comments.map(async (comment) => {
+          const likeCount = comment.likes.length;
+          const isLiked = currentUserId
+            ? await this.isCommentLiked(comment.id, currentUserId)
+            : false;
+
+          // 处理子评论的点赞数据
+          const repliesWithLikes = await Promise.all(
+            comment.replies.map(async (reply) => {
+              const replyLikeCount = reply.likes.length;
+              const isReplyLiked = currentUserId
+                ? await this.isCommentLiked(reply.id, currentUserId)
+                : false;
+
+              return {
+                ...reply,
+                likeCount: replyLikeCount,
+                isLiked: isReplyLiked,
+              };
+            }),
+          );
+
+          return {
+            ...comment,
+            likeCount,
+            isLiked,
+            replies: repliesWithLikes,
+          };
+        }),
+      );
+
+      return {
+        data,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    }
+
+    // 否则返回所有数据（保持向后兼容）
+    const comments = await this.prisma.comment.findMany({
+      where,
+      include,
       orderBy: {
         createdAt: 'desc',
       },

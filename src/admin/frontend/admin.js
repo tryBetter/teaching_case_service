@@ -293,7 +293,7 @@ async function loadUsers(page = 1, pageSize = 10, search = '', role = '') {
       params.append('role', role);
     }
 
-    const response = await fetch(`${API_BASE_URL}/admin/users?${params}`, {
+    const response = await fetch(`${API_BASE_URL}/users?${params}`, {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -470,7 +470,7 @@ document.addEventListener('DOMContentLoaded', function () {
 async function loadArticleFilters() {
   try {
     // 加载分类选项
-    const categoriesResponse = await fetch(`${API_BASE_URL}/admin/categories`, {
+    const categoriesResponse = await fetch(`${API_BASE_URL}/categories`, {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -490,7 +490,7 @@ async function loadArticleFilters() {
     }
 
     // 加载作者选项
-    const usersResponse = await fetch(`${API_BASE_URL}/admin/users?limit=100`, {
+    const usersResponse = await fetch(`${API_BASE_URL}/users?limit=100`, {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -699,16 +699,13 @@ async function restoreArticle(id, title) {
   }
 
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/admin/articles/${id}/restore`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-          'Content-Type': 'application/json',
-        },
+    const response = await fetch(`${API_BASE_URL}/articles/${id}/restore`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
       },
-    );
+    });
 
     if (response.ok) {
       alert('文章恢复成功！');
@@ -742,15 +739,12 @@ async function permanentlyDeleteArticle(id, title) {
   }
 
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/admin/articles/${id}/permanent`,
-      {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
+    const response = await fetch(`${API_BASE_URL}/articles/${id}/permanent`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${authToken}`,
       },
-    );
+    });
 
     if (response.ok) {
       alert('文章已永久删除');
@@ -793,10 +787,10 @@ async function loadArticles(
     // 根据删除筛选决定使用哪个API
     if (deleteFilter === 'deleted') {
       // 只看已删除 - 使用回收站API
-      apiUrl = `${API_BASE_URL}/admin/articles/deleted/list`;
+      apiUrl = `${API_BASE_URL}/articles/deleted/list`;
     } else {
       // 正常或全部 - 使用主列表API
-      apiUrl = `${API_BASE_URL}/admin/articles`;
+      apiUrl = `${API_BASE_URL}/articles`;
       // 如果是全部，添加includeDeleted参数
       if (deleteFilter === 'all') {
         params.append('includeDeleted', 'true');
@@ -930,7 +924,7 @@ async function loadArticles(
 // 加载分类列表
 async function loadCategories() {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/categories`, {
+    const response = await fetch(`${API_BASE_URL}/categories`, {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -948,7 +942,7 @@ async function loadCategories() {
                         <td>${category.id}</td>
                         <td>${category.name}</td>
                         <td>${category.description || '-'}</td>
-                        <td><span class="badge bg-secondary">${category._count.articles}</span></td>
+                        <td><span class="badge bg-secondary">${category._count?.articles || 0}</span></td>
                         <td>${formatDate(category.createdAt)}</td>
                         <td>
                             <button class="btn btn-sm btn-outline-primary" onclick="editCategory(${category.id})">
@@ -977,7 +971,7 @@ async function loadCategories() {
 // 加载媒体列表
 async function loadMedia() {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/media`, {
+    const response = await fetch(`${API_BASE_URL}/media?page=1&limit=100`, {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -1042,7 +1036,7 @@ async function loadMedia() {
 // 加载评论列表
 async function loadComments() {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/comments`, {
+    const response = await fetch(`${API_BASE_URL}/comment?page=1&limit=100`, {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -1086,7 +1080,7 @@ async function loadComments() {
 // 加载笔记列表
 async function loadNotes() {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/notes`, {
+    const response = await fetch(`${API_BASE_URL}/note?page=1&limit=100`, {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -1130,7 +1124,7 @@ async function loadNotes() {
 // 加载收藏列表
 async function loadFavorites() {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/favorites`, {
+    const response = await fetch(`${API_BASE_URL}/favorite?page=1&limit=100`, {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -1306,7 +1300,7 @@ function formatFileSize(bytes) {
 // 操作函数
 function deleteUser(userId) {
   if (confirm('确定要删除这个用户吗？')) {
-    fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+    fetch(`${API_BASE_URL}/users/${userId}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${authToken}`,
@@ -1336,7 +1330,7 @@ function deleteUser(userId) {
 // 禁用用户
 function disableUser(userId) {
   if (confirm('确定要禁用这个用户吗？禁用后用户将无法登录。')) {
-    fetch(`${API_BASE_URL}/admin/users/${userId}/disable`, {
+    fetch(`${API_BASE_URL}/users/${userId}/disable`, {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${authToken}`,
@@ -1366,7 +1360,7 @@ function disableUser(userId) {
 // 启用用户
 function enableUser(userId) {
   if (confirm('确定要启用这个用户吗？')) {
-    fetch(`${API_BASE_URL}/admin/users/${userId}/enable`, {
+    fetch(`${API_BASE_URL}/users/${userId}/enable`, {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${authToken}`,
@@ -1395,7 +1389,7 @@ function enableUser(userId) {
 
 function deleteArticle(articleId, title) {
   if (confirm(`确定要删除文章"${title}"吗？\n\n删除后可以在回收站中恢复。`)) {
-    fetch(`${API_BASE_URL}/admin/articles/${articleId}`, {
+    fetch(`${API_BASE_URL}/articles/${articleId}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${authToken}`,
@@ -1426,7 +1420,7 @@ function deleteArticle(articleId, title) {
 }
 
 function publishArticle(articleId) {
-  fetch(`${API_BASE_URL}/admin/articles/${articleId}/publish`, {
+  fetch(`${API_BASE_URL}/articles/${articleId}/publish`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${authToken}`,
@@ -1457,7 +1451,7 @@ function publishArticle(articleId) {
 
 function deleteCategory(categoryId) {
   if (confirm('确定要删除这个分类吗？')) {
-    fetch(`${API_BASE_URL}/admin/categories/${categoryId}`, {
+    fetch(`${API_BASE_URL}/categories/${categoryId}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${authToken}`,
@@ -1480,7 +1474,7 @@ function deleteCategory(categoryId) {
 
 function deleteMedia(mediaId) {
   if (confirm('确定要删除这个媒体文件吗？')) {
-    fetch(`${API_BASE_URL}/admin/media/${mediaId}`, {
+    fetch(`${API_BASE_URL}/media/${mediaId}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${authToken}`,
@@ -1503,7 +1497,7 @@ function deleteMedia(mediaId) {
 
 function deleteComment(commentId) {
   if (confirm('确定要删除这条评论吗？')) {
-    fetch(`${API_BASE_URL}/admin/comments/${commentId}`, {
+    fetch(`${API_BASE_URL}/comment/${commentId}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${authToken}`,
@@ -1526,7 +1520,7 @@ function deleteComment(commentId) {
 
 function deleteNote(noteId) {
   if (confirm('确定要删除这条笔记吗？')) {
-    fetch(`${API_BASE_URL}/admin/notes/${noteId}`, {
+    fetch(`${API_BASE_URL}/note/${noteId}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${authToken}`,
@@ -1549,7 +1543,7 @@ function deleteNote(noteId) {
 
 function deleteFavorite(userId, articleId) {
   if (confirm('确定要删除这条收藏记录吗？')) {
-    fetch(`${API_BASE_URL}/admin/favorites/${userId}/${articleId}`, {
+    fetch(`${API_BASE_URL}/favorite/${userId}/${articleId}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${authToken}`,
@@ -1587,7 +1581,7 @@ function showCreateUserModal() {
 // 编辑用户
 function editUser(userId) {
   // 获取用户信息
-  fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+  fetch(`${API_BASE_URL}/users/${userId}`, {
     headers: {
       Authorization: `Bearer ${authToken}`,
     },
@@ -1622,14 +1616,11 @@ function editUser(userId) {
 async function editArticle(articleId) {
   try {
     // 获取文章详情
-    const response = await fetch(
-      `${API_BASE_URL}/admin/articles/${articleId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
+    const response = await fetch(`${API_BASE_URL}/articles/${articleId}`, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
       },
-    );
+    });
 
     if (!response.ok) {
       alert('获取文章信息失败');
@@ -1669,7 +1660,7 @@ async function editArticle(articleId) {
 // 为编辑表单加载分类选项
 async function loadCategoriesForEdit(selectedCategoryId) {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/categories`, {
+    const response = await fetch(`${API_BASE_URL}/categories`, {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -1744,17 +1735,14 @@ async function updateArticle() {
   if (keywords.length > 0) updateData.keywords = keywords;
 
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/admin/articles/${articleId}`,
-      {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${authToken}`,
-        },
-        body: JSON.stringify(updateData),
+    const response = await fetch(`${API_BASE_URL}/articles/${articleId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
       },
-    );
+      body: JSON.stringify(updateData),
+    });
 
     if (response.ok) {
       alert('文章更新成功！');
@@ -1793,7 +1781,7 @@ function editCategory(categoryId) {
 async function viewMedia(mediaId) {
   try {
     // 获取媒体详情（使用单个媒体接口）
-    const response = await fetch(`${API_BASE_URL}/admin/media/${mediaId}`, {
+    const response = await fetch(`${API_BASE_URL}/media/${mediaId}`, {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -1918,7 +1906,7 @@ function viewRolePermissions(roleId) {
 // 加载角色选项
 async function loadRoleOptions(selectId, selectedRoleId = null) {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/roles`, {
+    const response = await fetch(`${API_BASE_URL}/users/roles`, {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -2003,7 +1991,7 @@ async function submitCreateUser() {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/users`, {
+    const response = await fetch(`${API_BASE_URL}/users`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -2081,7 +2069,7 @@ async function submitEditUser() {
       updateData.password = password;
     }
 
-    const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -2132,15 +2120,12 @@ function showBatchImportModal() {
 // 下载用户模板
 async function downloadUserTemplate() {
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/admin/users/template/download`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
+    const response = await fetch(`${API_BASE_URL}/users/template`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${authToken}`,
       },
-    );
+    });
 
     if (response.ok) {
       const blob = await response.blob();
@@ -2228,7 +2213,7 @@ async function startBatchImport() {
     formData.append('file', file);
 
     // 发送请求
-    const response = await fetch(`${API_BASE_URL}/admin/users/batch`, {
+    const response = await fetch(`${API_BASE_URL}/users/batch`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${authToken}`,

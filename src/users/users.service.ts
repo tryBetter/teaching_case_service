@@ -392,4 +392,83 @@ export class UsersService {
       });
     }
   }
+
+  /**
+   * 获取用户统计信息
+   */
+  async getUserStats() {
+    const [
+      totalUsers,
+      usersByRole,
+      newUsersToday,
+      newUsersThisWeek,
+      newUsersThisMonth,
+    ] = await Promise.all([
+      this.prisma.user.count(),
+
+      // 按角色统计用户数量
+      this.prisma.user
+        .groupBy({
+          by: ['roleId'],
+          _count: {
+            id: true,
+          },
+          orderBy: {
+            _count: {
+              id: 'desc',
+            },
+          },
+        })
+        .then(async (results) => {
+          const roleIds = results.map((r) => r.roleId);
+          const roles = await this.prisma.role.findMany({
+            where: { id: { in: roleIds } },
+            select: { id: true, name: true },
+          });
+
+          return results.map((result) => {
+            const role = roles.find((r) => r.id === result.roleId);
+            return {
+              role: role?.name || '未知角色',
+              count: result._count.id,
+            };
+          });
+        }),
+
+      // 今日新增用户
+      this.prisma.user.count({
+        where: {
+          createdAt: {
+            gte: new Date(new Date().setHours(0, 0, 0, 0)),
+          },
+        },
+      }),
+
+      // 本周新增用户
+      this.prisma.user.count({
+        where: {
+          createdAt: {
+            gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+          },
+        },
+      }),
+
+      // 本月新增用户
+      this.prisma.user.count({
+        where: {
+          createdAt: {
+            gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+          },
+        },
+      }),
+    ]);
+
+    return {
+      totalUsers,
+      usersByRole,
+      newUsersToday,
+      newUsersThisWeek,
+      newUsersThisMonth,
+    };
+  }
 }

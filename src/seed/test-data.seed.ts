@@ -641,15 +641,17 @@ CFD方法在叶片冷却设计中的应用。
     const teachers = users.filter(
       (u) => u.name?.includes('教授') || u.name?.includes('老师'),
     );
+    const assistants = users.filter((u) => u.name?.includes('助教'));
 
     let favoriteCount = 0;
 
-    // 学生收藏一些文章
+    // 学生收藏文章（每个学生收藏2-4篇文章）
     for (const student of students) {
-      const articlesToFavorite = articles.slice(
-        0,
-        Math.floor(Math.random() * 3) + 1,
-      );
+      const numToFavorite = Math.floor(Math.random() * 3) + 2; // 2-4篇
+      const articlesToFavorite = articles
+        .filter((a) => a.published) // 只收藏已发布的文章
+        .slice(0, Math.min(numToFavorite, articles.length));
+
       for (const article of articlesToFavorite) {
         try {
           await this.prisma.favorite.create({
@@ -665,17 +667,41 @@ CFD方法在叶片冷却设计中的应用。
       }
     }
 
-    // 教师收藏一些文章
+    // 教师收藏文章（每个教师收藏1-3篇文章）
     for (const teacher of teachers) {
+      const numToFavorite = Math.floor(Math.random() * 3) + 1; // 1-3篇
       const articlesToFavorite = articles.slice(
         0,
-        Math.floor(Math.random() * 2) + 1,
+        Math.min(numToFavorite, articles.length),
       );
+
       for (const article of articlesToFavorite) {
         try {
           await this.prisma.favorite.create({
             data: {
               userId: teacher.id,
+              articleId: article.id,
+            },
+          });
+          favoriteCount++;
+        } catch {
+          // 可能已经收藏过了，跳过
+        }
+      }
+    }
+
+    // 助教收藏文章（每个助教收藏1-2篇文章）
+    for (const assistant of assistants) {
+      const numToFavorite = Math.floor(Math.random() * 2) + 1; // 1-2篇
+      const articlesToFavorite = articles
+        .filter((a) => a.published)
+        .slice(0, Math.min(numToFavorite, articles.length));
+
+      for (const article of articlesToFavorite) {
+        try {
+          await this.prisma.favorite.create({
+            data: {
+              userId: assistant.id,
               articleId: article.id,
             },
           });
@@ -696,30 +722,98 @@ CFD方法在叶片冷却设计中的应用。
     console.log('创建测试笔记...');
 
     const students = users.filter((u) => u.name?.includes('小'));
+    const teachers = users.filter(
+      (u) => u.name?.includes('教授') || u.name?.includes('老师'),
+    );
+    const assistants = users.filter((u) => u.name?.includes('助教'));
 
     const testNotes = [
+      // 学生笔记
       {
         content:
-          '液体火箭发动机燃烧室的关键设计参数：\n1. 燃烧室压力\n2. 燃烧温度\n3. 停留时间\n4. 混合比',
+          '液体火箭发动机燃烧室的关键设计参数：\n1. 燃烧室压力：通常在10-20MPa\n2. 燃烧温度：约3000-3500K\n3. 停留时间：一般为2-10ms\n4. 混合比：需根据推进剂特性优化\n\n重点：热防护设计至关重要！',
         userId: students[0]?.id,
         articleId: articles[0]?.id,
       },
       {
         content:
-          '固体火箭发动机推进剂配方优化的要点：\n- 比冲最大化\n- 燃速适中\n- 力学性能良好\n- 安全性保证',
+          '固体火箭发动机推进剂配方优化的要点：\n- 比冲最大化（目标：260-280s）\n- 燃速适中（避免过快导致压力峰值）\n- 力学性能良好（低温不脆裂，高温不软化）\n- 安全性保证（感度低，贮存稳定）\n\n笔记：HTPB作为粘合剂性能优异',
         userId: students[1]?.id,
         articleId: articles[1]?.id,
       },
       {
         content:
-          '超燃冲压发动机燃烧不稳定性的控制方法：\n1. 主动控制\n2. 被动控制\n3. 结构优化',
+          '超燃冲压发动机燃烧不稳定性的控制方法：\n1. 主动控制：燃料流量调节\n2. 被动控制：声学腔体\n3. 结构优化：燃烧室几何优化\n\n研究重点：需要深入理解热声耦合机理',
         userId: students[2]?.id,
         articleId: articles[2]?.id,
       },
       {
         content:
-          '燃气涡轮发动机叶片冷却技术总结：\n- 对流冷却\n- 冲击冷却\n- 气膜冷却\n- 复合冷却',
+          '燃气涡轮发动机叶片冷却技术总结：\n- 对流冷却：内部通道设计\n- 冲击冷却：提高换热系数\n- 气膜冷却：降低叶片表面温度\n- 复合冷却：多种方式组合\n\n关键：冷却效率与压力损失的平衡',
         userId: students[3]?.id,
+        articleId: articles[3]?.id,
+      },
+      {
+        content:
+          '组合发动机模态转换技术笔记：\n- 低速段：涡轮/火箭模式\n- 高速段：冲压/超燃模式\n- 转换策略：平稳过渡，避免推力中断\n\n难点：模态转换控制算法',
+        userId: students[4]?.id,
+        articleId: articles[4]?.id,
+      },
+      // 教师笔记
+      {
+        content:
+          '教学要点：液体火箭发动机燃烧室设计\n\n重点讲解内容：\n1. 热力学计算方法\n2. CFD仿真流程\n3. 工程实例分析\n4. 常见问题及解决方案\n\n课后作业：设计一个简单的燃烧室模型',
+        userId: teachers[0]?.id,
+        articleId: articles[0]?.id,
+      },
+      {
+        content:
+          '备课笔记：固体推进剂配方优化案例\n\n讲课思路：\n- 先讲理论基础\n- 再介绍优化方法\n- 最后展示工程案例\n\n互动环节：让学生讨论不同配方的优缺点',
+        userId: teachers[1]?.id,
+        articleId: articles[1]?.id,
+      },
+      {
+        content:
+          '科研笔记：超燃冲压发动机最新进展\n\n值得关注的研究方向：\n1. 宽速域稳定燃烧技术\n2. 智能控制系统\n3. 新型燃料应用\n4. 热防护新材料\n\n建议：可以申请相关课题研究',
+        userId: teachers[2]?.id,
+        articleId: articles[2]?.id,
+      },
+      // 助教笔记
+      {
+        content:
+          '辅导笔记：学生对燃烧室设计的常见疑问\n\nQ1: 为什么要使用再生冷却？\nA: 提高冷却效率，利用燃料吸热\n\nQ2: 喷注器孔径如何确定？\nA: 根据流量、压降和雾化要求计算\n\n重点：多引导学生思考工程实际问题',
+        userId: assistants[0]?.id,
+        articleId: articles[0]?.id,
+      },
+      {
+        content:
+          '答疑整理：叶片冷却技术相关问题\n\n1. 气膜冷却的冷却效率如何计算？\n2. 冷却通道设计有哪些约束？\n3. 如何在CFD中建模？\n\n下次辅导重点讲解这些内容',
+        userId: assistants[1]?.id,
+        articleId: articles[3]?.id,
+      },
+      // 更多学生笔记
+      {
+        content:
+          '复习笔记：喷注器设计关键技术\n\n1. 喷注方式选择（同轴、撞击式等）\n2. 雾化质量评估\n3. 混合效率分析\n4. 燃烧效率优化\n\n疑问：如何权衡雾化质量和压力损失？',
+        userId: students[0]?.id,
+        articleId: articles[0]?.id,
+      },
+      {
+        content:
+          '学习总结：推进剂配方设计方法\n\n理论计算：\n- 能量计算\n- 燃速计算\n- 力学性能预测\n\n实验验证：\n- 小样试验\n- 发动机试车\n\n收获很大！',
+        userId: students[2]?.id,
+        articleId: articles[1]?.id,
+      },
+      {
+        content:
+          '阅读笔记：燃烧不稳定性的物理本质\n\n关键概念：\n- 振荡燃烧\n- 声学模态\n- 热释放波动\n- 反馈机制\n\n需要进一步学习：控制理论基础',
+        userId: students[1]?.id,
+        articleId: articles[2]?.id,
+      },
+      {
+        content:
+          '实验记录参考：叶片冷却效果测试\n\n测试条件：\n- 主流温度：1500K\n- 冷却气流温度：500K\n- 吹风比：0.5-2.0\n\n观察要点：温度分布、冷却效率',
+        userId: students[4]?.id,
         articleId: articles[3]?.id,
       },
     ];
@@ -728,10 +822,14 @@ CFD方法在叶片冷却设计中的应用。
     for (const noteData of testNotes) {
       if (!noteData.userId || !noteData.articleId) continue;
 
-      const note = await this.prisma.note.create({
-        data: noteData,
-      });
-      createdNotes.push(note);
+      try {
+        const note = await this.prisma.note.create({
+          data: noteData,
+        });
+        createdNotes.push(note);
+      } catch (error) {
+        console.log(`创建笔记失败，可能已存在: ${error}`);
+      }
     }
 
     console.log(`创建了 ${createdNotes.length} 个测试笔记`);

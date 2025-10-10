@@ -1,9 +1,18 @@
-import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiParam,
   ApiResponse,
+  ApiQuery,
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { FavoriteService } from './favorite.service';
@@ -321,9 +330,39 @@ export class FavoriteController {
       },
     },
   })
+  @ApiQuery({
+    name: 'userId',
+    description: '用户ID（不提供则返回所有用户收藏，仅超级管理员可用）',
+    required: false,
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'page',
+    description: '页码',
+    required: false,
+    type: Number,
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    description: '每页数量',
+    required: false,
+    type: Number,
+    example: 10,
+  })
   @Get()
-  findAll(@CurrentUser() user: AuthenticatedUser) {
-    return this.favoriteService.findAll(user.userId);
+  findAll(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('userId') userId?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    // 如果明确提供了userId，使用该userId；否则不传递userId（返回所有数据）
+    const targetUserId = userId ? +userId : undefined;
+    return this.favoriteService.findAll(targetUserId, {
+      page: page ? +page : undefined,
+      limit: limit ? +limit : undefined,
+    });
   }
 
   @ApiOperation({

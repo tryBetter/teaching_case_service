@@ -174,16 +174,36 @@ export class CommentController {
       },
     },
   })
+  @ApiQuery({
+    name: 'page',
+    description: '页码',
+    required: false,
+    type: Number,
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    description: '每页数量',
+    required: false,
+    type: Number,
+    example: 10,
+  })
   @Get()
   findAll(
     @Query('articleId') articleId?: string,
     @Query('authorId') authorId?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
     @CurrentUser() user?: AuthenticatedUser,
   ) {
     return this.commentService.findAll(
       articleId ? +articleId : undefined,
       authorId ? +authorId : undefined,
       user?.userId,
+      {
+        page: page ? +page : undefined,
+        limit: limit ? +limit : undefined,
+      },
     );
   }
 
