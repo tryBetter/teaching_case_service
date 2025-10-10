@@ -26,7 +26,6 @@ import { CurrentUser } from '../auth/user.decorator';
 import type { AuthenticatedUser } from '../auth/interfaces/user.interface';
 import {
   RequirePermissions,
-  RequireTeacherOrAssistant,
   RequireTeacherLeaderOrTeacher,
   RequireTeacherLeaderOrTeacherOrAssistantLeaderOrAssistant,
 } from '../auth/decorators/roles.decorator';

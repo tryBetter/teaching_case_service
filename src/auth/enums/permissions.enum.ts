@@ -58,8 +58,8 @@ export enum PermissionsMode {
 
 // 检查用户是否有特定权限（已弃用）
 export function hasPermission(
-  userRole: string,
-  permission: Permission,
+  _userRole: string,
+  _permission: Permission,
 ): boolean {
   // 返回 false，强制使用数据库权限检查
   return false;
@@ -67,8 +67,8 @@ export function hasPermission(
 
 // 检查用户是否有任一权限（已弃用）
 export function hasAnyPermission(
-  userRole: string,
-  permissions: Permission[],
+  _userRole: string,
+  _permissions: Permission[],
 ): boolean {
   // 返回 false，强制使用数据库权限检查
   return false;
@@ -76,8 +76,8 @@ export function hasAnyPermission(
 
 // 检查用户是否有所有权限（已弃用）
 export function hasAllPermissions(
-  userRole: string,
-  permissions: Permission[],
+  _userRole: string,
+  _permissions: Permission[],
 ): boolean {
   // 返回 false，强制使用数据库权限检查
   return false;

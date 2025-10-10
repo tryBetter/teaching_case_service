@@ -117,4 +117,4 @@ async function testStats() {
   }
 }
 
-testStats();
+void testStats();

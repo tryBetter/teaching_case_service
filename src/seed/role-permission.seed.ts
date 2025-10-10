@@ -246,7 +246,7 @@ export async function seedRolePermissions(prisma: PrismaService) {
       });
       createdPermissions.push(created);
       console.log(`创建权限: ${permission.name}`);
-    } catch (error) {
+    } catch {
       // 权限已存在，跳过
       console.log(`权限已存在: ${permission.name}`);
     }
@@ -308,7 +308,7 @@ export async function seedRolePermissions(prisma: PrismaService) {
       });
       createdRoles.push(created);
       console.log(`创建角色: ${role.name}`);
-    } catch (error) {
+    } catch {
       // 角色已存在，跳过
       console.log(`角色已存在: ${role.name}`);
     }

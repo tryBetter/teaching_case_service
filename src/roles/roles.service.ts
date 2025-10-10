@@ -230,7 +230,7 @@ export class RolesService {
     roleId: number,
     assignPermissionsDto: AssignPermissionsDto,
   ) {
-    const role = await this.findRoleById(roleId);
+    await this.findRoleById(roleId);
 
     // 验证权限ID是否存在
     const permissions = await this.prisma.permission.findMany({

@@ -27,7 +27,6 @@ import { CreateMediaDto } from './dto/create-media.dto';
 import { UpdateMediaDto } from './dto/update-media.dto';
 import { UploadMediaDto } from './dto/upload-media.dto';
 import type { UploadedFile as UploadedFileInterface } from './interfaces/uploaded-file.interface';
-import { Public } from '../auth/public.decorator';
 import { CurrentUser } from '../auth/user.decorator';
 import type { AuthenticatedUser } from '../auth/interfaces/user.interface';
 import {

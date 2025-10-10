@@ -1,21 +1,5 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  UseGuards,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiParam,
-  ApiResponse,
-  ApiBody,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { Controller, Get, UseGuards, Param } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminRolesService } from './admin-roles.service';
 import { RequireSuperAdmin } from '../decorators/super-admin.decorator';
 import { SuperAdminGuard } from '../guards/super-admin.guard';

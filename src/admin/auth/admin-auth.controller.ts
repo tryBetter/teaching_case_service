@@ -76,7 +76,10 @@ export class AdminAuthController {
       console.log('AdminAuthController: 登录成功');
       return result;
     } catch (error) {
-      console.log('AdminAuthController: 登录失败', error.message);
+      console.log(
+        'AdminAuthController: 登录失败',
+        error instanceof Error ? error.message : String(error),
+      );
       throw error;
     }
   }

@@ -591,7 +591,7 @@ export class StatsService {
    * 获取用户增长趋势数据
    */
   async getUserGrowthTrend(days: number = 30): Promise<UserGrowthTrendDto> {
-    const endDate = new Date();
+    // const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
@@ -635,7 +635,7 @@ export class StatsService {
   async getContentGrowthTrend(
     days: number = 30,
   ): Promise<ContentGrowthTrendDto> {
-    const endDate = new Date();
+    // const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
@@ -694,7 +694,7 @@ export class StatsService {
    * 获取访问趋势数据
    */
   async getVisitTrend(days: number = 30): Promise<VisitTrendDto> {
-    const endDate = new Date();
+    // const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 

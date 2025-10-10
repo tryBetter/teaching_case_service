@@ -30,7 +30,6 @@ import { BatchCreateUserResult } from './dto/batch-create-user.dto';
 import { ExcelService } from './services/excel.service';
 import {
   RequirePermissions,
-  RequireTeacher,
   RequireAdmin,
 } from '../auth/decorators/roles.decorator';
 import { Permission } from '../auth/enums/permissions.enum';

@@ -13,7 +13,7 @@ import { UserRole } from '../../auth/enums/user-role.enum';
 export class SuperAdminGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  canActivate(context: ExecutionContext): boolean {
     // 检查是否需要超级管理员权限
     const requireSuperAdmin = this.reflector.getAllAndOverride<boolean>(
       SUPER_ADMIN_KEY,

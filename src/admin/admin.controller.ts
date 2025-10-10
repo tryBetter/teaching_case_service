@@ -5,6 +5,9 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import type { Response } from 'express';
+import { join } from 'path';
+import { readFileSync, existsSync } from 'fs';
 import { AdminService } from './admin.service';
 import { RequireSuperAdmin } from './decorators/super-admin.decorator';
 import { SuperAdminGuard } from './guards/super-admin.guard';
@@ -18,10 +21,7 @@ export class AdminController {
 
   @Public()
   @Get()
-  getAdminIndex(@Res() res) {
-    const { join } = require('path');
-    const fs = require('fs');
-
+  getAdminIndex(@Res() res: Response) {
     try {
       // 尝试多个可能的路径
       const possiblePaths = [
@@ -30,14 +30,14 @@ export class AdminController {
         join(process.cwd(), 'src', 'admin', 'frontend', 'index.html'), // 项目根目录路径
       ];
 
-      let htmlContent = null;
+      let htmlContent: string | null = null;
       for (const htmlPath of possiblePaths) {
         try {
-          if (fs.existsSync(htmlPath)) {
-            htmlContent = fs.readFileSync(htmlPath, 'utf8');
+          if (existsSync(htmlPath)) {
+            htmlContent = readFileSync(htmlPath, 'utf8');
             break;
           }
-        } catch (error) {
+        } catch {
           // 继续尝试下一个路径
         }
       }
@@ -64,7 +64,7 @@ export class AdminController {
         <html>
           <body>
             <h1>无法加载管理界面</h1>
-            <p>错误：${error.message}</p>
+            <p>错误：${error instanceof Error ? error.message : String(error)}</p>
           </body>
         </html>
       `);

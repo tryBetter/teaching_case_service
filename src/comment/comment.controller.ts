@@ -19,8 +19,6 @@ import {
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
-import { LikeCommentDto } from './dto/like-comment.dto';
-import { Public } from '../auth/public.decorator';
 import { CurrentUser } from '../auth/user.decorator';
 import type { AuthenticatedUser } from '../auth/interfaces/user.interface';
 

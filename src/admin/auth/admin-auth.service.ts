@@ -79,7 +79,7 @@ export class AdminAuthService {
           role: normalizeRoleName(user.role.name), // 转换为英文枚举值
         },
       };
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException('无效的令牌');
     }
   }
@@ -114,7 +114,8 @@ export class AdminAuthService {
     console.log(`密码匹配: ${passwordMatch}`);
 
     if (user && passwordMatch) {
-      const { password: _password, ...result } = user;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, ...result } = user;
       return {
         ...result,
         role: normalizeRoleName(result.role.name), // 转换为英文枚举值
