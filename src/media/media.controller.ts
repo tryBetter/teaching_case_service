@@ -74,7 +74,7 @@ export class MediaController {
   @ApiOperation({
     summary: '上传媒体文件',
     description:
-      '支持上传图片和视频文件到服务器，文件将存储在服务器上并返回可访问的HTTP链接。支持的文件格式：图片(JPEG, PNG, GIF, WebP)，视频(MP4, AVI, MOV, WMV)。文件大小限制：图片最大50MB，视频最大1GB。',
+      '【教师和教师组长专用】上传图片或视频文件到服务器。文件会自动按类型分类存储，并生成可访问的HTTP URL。可以在上传时关联到指定的文章。适用场景：上传教学案例配图、上传实验视频、为文章添加多媒体素材。支持格式：图片(JPEG/PNG/GIF/WebP)、视频(MP4/AVI/MOV/WMV)。大小限制：图片≤50MB，视频≤1GB。上传后的文件会记录上传者信息，便于追溯和管理。',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -240,29 +240,40 @@ export class MediaController {
     );
   }
 
-  @ApiOperation({ summary: '获取所有媒体文件' })
+  @ApiOperation({
+    summary: '获取媒体文件列表',
+    description:
+      '获取系统中的媒体文件列表，支持分页和按上传者筛选。返回媒体文件的详细信息，包括文件URL、类型、大小、上传者信息、关联文章等。适用场景：后台管理系统媒体管理页面、查看特定用户上传的文件、统计存储使用情况。',
+  })
   @ApiQuery({
     name: 'userId',
-    description: '用户ID',
+    description: '按上传者ID筛选。不提供时返回所有媒体文件（超级管理员模式）',
     required: false,
     type: Number,
   })
   @ApiQuery({
     name: 'page',
-    description: '页码',
+    description: '页码，从1开始。提供page和limit时返回分页数据',
     required: false,
     type: Number,
     example: 1,
   })
   @ApiQuery({
     name: 'limit',
-    description: '每页数量',
+    description: '每页媒体文件数量，建议：10、50、100',
     required: false,
     type: Number,
     example: 10,
   })
-  @ApiResponse({ status: 200, description: '获取媒体文件列表成功' })
-  @ApiResponse({ status: 401, description: '未授权' })
+  @ApiResponse({
+    status: 200,
+    description:
+      '返回媒体文件列表。包含分页时返回：{data: [], pagination: {}}；不包含分页时返回数组',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '未授权，需要登录后访问',
+  })
   @Get()
   findAll(
     @Query('userId') userId?: string,

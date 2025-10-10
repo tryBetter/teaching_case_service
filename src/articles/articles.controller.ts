@@ -45,12 +45,23 @@ export class ArticlesController {
     private readonly adminArticlesService: AdminArticlesService,
   ) {}
 
-  @ApiOperation({ summary: '创建文章' })
-  @ApiResponse({ status: 201, description: '文章创建成功' })
-  @ApiResponse({ status: 400, description: '请求参数错误' })
+  @ApiOperation({
+    summary: '创建文章',
+    description:
+      '【教师和教师组长专用】创建新的教学案例文章。自动将当前登录用户设置为文章作者。文章可以设置为草稿状态或直接发布。支持关联分类、筛选条件、关键词等元数据。适用场景：教师撰写新的教学案例、发布研究成果、分享教学经验。创建后可以通过编辑接口继续完善内容。',
+  })
+  @ApiResponse({
+    status: 201,
+    description:
+      '文章创建成功，返回新创建的文章完整信息，包括自动生成的ID和时间戳',
+  })
+  @ApiResponse({
+    status: 400,
+    description: '请求参数错误：标题为空、分类ID无效、筛选条件ID不存在等',
+  })
   @ApiResponse({
     status: 403,
-    description: '权限不足，需要教师组长或教师角色',
+    description: '权限不足，仅教师和教师组长可创建文章。助教、学生无此权限',
   })
   @RequireTeacherLeaderOrTeacher()
   @Post()
@@ -64,18 +75,55 @@ export class ArticlesController {
     });
   }
 
-  @ApiOperation({ summary: '获取文章列表（带分页）' })
-  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
-  @ApiQuery({ name: 'published', required: false, type: Boolean })
-  @ApiQuery({ name: 'categoryId', required: false, type: Number })
-  @ApiQuery({ name: 'authorId', required: false, type: Number })
-  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiOperation({
+    summary: '获取文章列表（分页+筛选）',
+    description:
+      '【超级管理员专用】获取文章列表，支持多维度筛选和分页。适用场景：后台管理系统文章管理页面、统计分析、内容审核。支持按发布状态、分类、作者、关键词搜索筛选，也支持查看已删除的文章（回收站功能）。',
+  })
   @ApiQuery({
-    name: 'includeDeleted',
+    name: 'page',
+    description: '页码，从1开始',
+    required: false,
+    type: Number,
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    description: '每页文章数量，建议：10、20、50',
+    required: false,
+    type: Number,
+    example: 10,
+  })
+  @ApiQuery({
+    name: 'published',
+    description: '发布状态筛选：true-仅已发布，false-仅草稿，不提供-全部',
     required: false,
     type: Boolean,
-    description: '是否包括已删除的文章',
+  })
+  @ApiQuery({
+    name: 'categoryId',
+    description: '按分类ID筛选文章',
+    required: false,
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'authorId',
+    description: '按作者ID筛选文章，用于查看特定教师的文章',
+    required: false,
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'search',
+    description: '关键词搜索，匹配文章标题或内容',
+    required: false,
+    type: String,
+  })
+  @ApiQuery({
+    name: 'includeDeleted',
+    description:
+      '是否包括已删除的文章。true-包含，false/不提供-不包含。用于回收站功能',
+    required: false,
+    type: Boolean,
   })
   @ApiResponse({ status: 200, description: '获取文章列表成功' })
   @RequireSuperAdmin()
@@ -102,8 +150,16 @@ export class ArticlesController {
   }
 
   @Public()
-  @ApiOperation({ summary: '获取所有文章（无分页）' })
-  @ApiResponse({ status: 200, description: '获取文章列表成功' })
+  @ApiOperation({
+    summary: '获取所有文章（无分页，公开接口）',
+    description:
+      '获取所有已发布的文章列表，无分页限制。仅返回未删除的文章。适用场景：前端首页文章列表、文章搜索、数据导出。注意：此接口不需要认证，任何人都可访问。',
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      '返回文章数组，包含作者信息、分类信息、筛选条件等。按创建时间倒序排列',
+  })
   @Get('all')
   findAll() {
     return this.articlesService.findAll();
@@ -163,13 +219,36 @@ export class ArticlesController {
     );
   }
 
-  @ApiOperation({ summary: '根据ID获取文章' })
-  @ApiParam({ name: 'id', description: '文章ID' })
-  @ApiOperation({ summary: '获取已删除的文章列表' })
-  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
-  @ApiQuery({ name: 'search', required: false, type: String })
-  @ApiResponse({ status: 200, description: '获取已删除文章列表成功' })
+  @ApiOperation({
+    summary: '获取回收站文章列表',
+    description:
+      '【超级管理员专用】获取已删除的文章列表（回收站）。这些文章已被软删除，但数据仍保留在数据库中。支持关键词搜索和分页。适用场景：后台管理系统回收站功能、误删除后恢复文章、定期清理已删除文章。文章可以通过恢复接口恢复，或通过永久删除接口彻底删除。',
+  })
+  @ApiQuery({
+    name: 'page',
+    description: '页码，从1开始',
+    required: false,
+    type: Number,
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    description: '每页文章数量',
+    required: false,
+    type: Number,
+    example: 10,
+  })
+  @ApiQuery({
+    name: 'search',
+    description: '搜索关键词，匹配文章标题或内容',
+    required: false,
+    type: String,
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      '返回已删除文章列表，包含删除时间、作者信息、分类信息。按删除时间倒序排列',
+  })
   @RequireSuperAdmin()
   @Get('deleted/list')
   async findDeleted(
@@ -184,8 +263,15 @@ export class ArticlesController {
     });
   }
 
-  @ApiOperation({ summary: '获取文章统计信息' })
-  @ApiResponse({ status: 200, description: '获取统计信息成功' })
+  @ApiOperation({
+    summary: '获取文章统计数据',
+    description:
+      '【超级管理员专用】获取文章相关的完整统计数据。包括：文章总数、发布/草稿/推荐/已删除数量、按分类统计、新增趋势等。适用场景：后台管理系统仪表盘、统计报表、数据分析。',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '返回详细的文章统计信息，包括各种维度的统计数据和趋势分析',
+  })
   @RequireSuperAdmin()
   @Get('stats')
   async getArticleStats() {

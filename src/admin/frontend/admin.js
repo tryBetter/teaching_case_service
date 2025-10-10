@@ -95,6 +95,21 @@ function showAdminInterface() {
       : '超级管理员';
     console.log('更新用户信息:', currentUserElement.textContent);
   }
+
+  // 默认显示仪表盘
+  const dashboardSection = document.getElementById('dashboardSection');
+  if (dashboardSection) {
+    dashboardSection.style.display = 'block';
+    console.log('显示仪表盘');
+  }
+
+  // 设置仪表盘导航链接为激活状态
+  const dashboardNavLink = document.querySelector(
+    'a[onclick="showSection(\'dashboard\')"]',
+  );
+  if (dashboardNavLink) {
+    dashboardNavLink.classList.add('active');
+  }
 }
 
 // 处理登录

@@ -49,8 +49,9 @@ export class CategoriesController {
   }
 
   @ApiOperation({
-    summary: '获取所有分类',
-    description: '获取系统中所有可用的文章分类',
+    summary: '获取所有分类列表',
+    description:
+      '【公开接口】获取系统中所有可用的文章分类列表。返回分类基本信息和文章数量统计。分类按创建时间倒序排列。适用场景：前端分类导航菜单、文章创建/编辑时选择分类、筛选器、后台管理系统分类管理页面。此接口不需要认证，所有用户均可访问。',
   })
   @ApiResponse({
     status: 200,
