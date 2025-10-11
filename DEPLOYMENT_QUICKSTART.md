@@ -1,0 +1,288 @@
+# CentOS 快速部署指南
+
+本文档提供快速部署步骤，详细内容请参考 [DEPLOYMENT_GUIDE_CENTOS.md](./DEPLOYMENT_GUIDE_CENTOS.md)
+
+## 🚀 快速开始
+
+### 前提条件
+- CentOS 7/8 或 Rocky Linux 8 服务器
+- 拥有 sudo 权限的用户账号
+- 服务器可以访问互联网
+
+---
+
+## 📝 部署步骤
+
+### 1. 安装基础环境
+
+```bash
+# 更新系统
+sudo yum update -y
+
+# 安装 Node.js 18
+curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
+sudo yum install -y nodejs
+
+# 验证安装
+node --version  # v18.x.x
+npm --version   # 9.x.x
+```
+
+### 2. 安装 PostgreSQL 14
+
+```bash
+# 添加官方仓库
+sudo yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+
+# 禁用内置模块（CentOS 8）
+sudo dnf -qy module disable postgresql
+
+# 安装 PostgreSQL
+sudo yum install -y postgresql14 postgresql14-server
+
+# 初始化并启动
+sudo /usr/pgsql-14/bin/postgresql-14-setup initdb
+sudo systemctl enable postgresql-14
+sudo systemctl start postgresql-14
+```
+
+### 3. 配置数据库
+
+```bash
+# 切换到 postgres 用户
+sudo su - postgres
+psql
+
+# 在 psql 中执行：
+CREATE DATABASE teaching_case_db;
+CREATE USER teaching_user WITH PASSWORD 'your_password';
+GRANT ALL PRIVILEGES ON DATABASE teaching_case_db TO teaching_user;
+\q
+
+# 退出
+exit
+```
+
+### 4. 安装 Nginx 和 PM2
+
+```bash
+# 安装 Nginx
+sudo yum install -y nginx
+sudo systemctl enable nginx
+sudo systemctl start nginx
+
+# 安装 PM2
+sudo npm install -g pm2
+```
+
+### 5. 配置防火墙
+
+```bash
+# 开放端口
+sudo firewall-cmd --permanent --add-port=80/tcp
+sudo firewall-cmd --permanent --add-port=443/tcp
+sudo firewall-cmd --reload
+```
+
+### 6. 部署应用
+
+```bash
+# 创建项目目录
+mkdir -p ~/apps
+cd ~/apps
+
+# 克隆项目（或使用 scp 上传）
+git clone <your-repo-url> teaching-case-service
+cd teaching-case-service
+
+# 安装依赖
+npm install
+
+# 配置环境变量
+cp .env.example .env
+vim .env  # 修改数据库连接等配置
+
+# 生成 Prisma Client
+npx prisma generate
+
+# 运行数据库迁移
+npx prisma migrate deploy
+
+# 编译项目
+npm run build
+
+# 创建日志目录
+mkdir -p logs
+
+# 使用 PM2 启动
+pm2 start ecosystem.config.js
+
+# 保存 PM2 配置并设置开机自启
+pm2 save
+pm2 startup
+# 按提示执行命令
+```
+
+### 7. 配置 Nginx
+
+```bash
+# 复制 Nginx 配置
+sudo cp nginx.conf.example /etc/nginx/conf.d/teaching-case.conf
+
+# 编辑配置文件，修改域名和路径
+sudo vim /etc/nginx/conf.d/teaching-case.conf
+
+# 测试配置
+sudo nginx -t
+
+# 重启 Nginx
+sudo systemctl restart nginx
+```
+
+### 8. 验证部署
+
+```bash
+# 检查服务状态
+pm2 status
+
+# 查看日志
+pm2 logs teaching-case-service
+
+# 测试 API
+curl http://localhost:3000/api
+
+# 访问后台管理
+# 浏览器打开: http://your-domain.com/admin
+```
+
+---
+
+## 🔒 配置 SSL（推荐）
+
+```bash
+# 安装 Certbot
+sudo yum install -y certbot python3-certbot-nginx
+
+# 自动配置 SSL
+sudo certbot --nginx -d your-domain.com -d www.your-domain.com
+
+# 设置自动续期
+sudo crontab -e
+# 添加：0 2 * * * /usr/bin/certbot renew --quiet
+```
+
+---
+
+## 🔄 更新部署
+
+```bash
+cd ~/apps/teaching-case-service
+
+# 使用部署脚本
+chmod +x deploy.sh
+./deploy.sh
+
+# 或手动执行
+git pull
+npm ci --production
+npm run build
+npx prisma migrate deploy
+pm2 reload ecosystem.config.js
+```
+
+---
+
+## 📊 常用命令
+
+### PM2 管理
+
+```bash
+pm2 status                          # 查看状态
+pm2 logs teaching-case-service      # 查看日志
+pm2 restart teaching-case-service   # 重启
+pm2 stop teaching-case-service      # 停止
+pm2 monit                           # 监控
+```
+
+### 数据库管理
+
+```bash
+# 连接数据库
+psql -h localhost -U teaching_user -d teaching_case_db
+
+# 运行迁移
+npx prisma migrate deploy
+
+# 查看迁移状态
+npx prisma migrate status
+```
+
+### Nginx 管理
+
+```bash
+sudo nginx -t                  # 测试配置
+sudo systemctl restart nginx   # 重启
+sudo systemctl status nginx    # 查看状态
+```
+
+---
+
+## ⚠️ 常见问题
+
+### 1. 502 Bad Gateway
+
+```bash
+# 检查应用是否运行
+pm2 status
+
+# 检查 SELinux
+sudo setsebool -P httpd_can_network_connect 1
+```
+
+### 2. 数据库连接失败
+
+```bash
+# 检查 PostgreSQL 状态
+sudo systemctl status postgresql-14
+
+# 查看日志
+sudo tail -f /var/lib/pgsql/14/data/log/postgresql-*.log
+```
+
+### 3. 文件上传失败
+
+```bash
+# 检查权限
+chmod -R 755 uploads/
+
+# 检查 SELinux
+sudo chcon -R -t httpd_sys_content_t uploads/
+```
+
+---
+
+## 📚 详细文档
+
+完整的部署说明和故障排除，请参考：
+- [DEPLOYMENT_GUIDE_CENTOS.md](./DEPLOYMENT_GUIDE_CENTOS.md)
+
+---
+
+## ✅ 部署检查清单
+
+- [ ] Node.js 18 已安装
+- [ ] PostgreSQL 14 已安装并运行
+- [ ] 数据库和用户已创建
+- [ ] 防火墙端口已开放
+- [ ] 项目代码已部署
+- [ ] 环境变量已配置
+- [ ] 数据库迁移已完成
+- [ ] PM2 应用已启动
+- [ ] Nginx 已配置并运行
+- [ ] 可以通过域名访问
+- [ ] SSL 证书已配置（如需要）
+
+---
+
+*快速部署指南 - v1.0*
+
