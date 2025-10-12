@@ -1,9 +1,9 @@
 # Nginx 配置示例
 # 将此文件复制到 /etc/nginx/conf.d/teaching-case.conf
 
-# HTTP 配置（如果还没有 SSL 证书，使用此配置）
+# HTTP 配置（使用 8787 端口，避免占用标准 80 端口）
 server {
-    listen 80;
+    listen 8787;
     server_name your-domain.com www.your-domain.com;  # 替换为你的域名
 
     # 日志
@@ -84,12 +84,64 @@ server {
 #     ssl_session_cache shared:SSL:10m;
 #     ssl_session_timeout 10m;
 # 
-#     # ... 其他配置同 HTTP ...
+#     # 客户端最大上传大小
+#     client_max_body_size 1024M;
+# 
+#     # 代理超时设置
+#     proxy_connect_timeout 600;
+#     proxy_send_timeout 600;
+#     proxy_read_timeout 600;
+#     send_timeout 600;
+#
+#     # API 接口代理
+#     location /api {
+#         proxy_pass http://localhost:3000;
+#         proxy_http_version 1.1;
+#         proxy_set_header Upgrade $http_upgrade;
+#         proxy_set_header Connection 'upgrade';
+#         proxy_set_header Host $host;
+#         proxy_set_header X-Real-IP $remote_addr;
+#         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#         proxy_set_header X-Forwarded-Proto $scheme;
+#         proxy_cache_bypass $http_upgrade;
+#     }
+#
+#     # 后台管理界面
+#     location /admin {
+#         proxy_pass http://localhost:3000;
+#         proxy_http_version 1.1;
+#         proxy_set_header Upgrade $http_upgrade;
+#         proxy_set_header Connection 'upgrade';
+#         proxy_set_header Host $host;
+#         proxy_set_header X-Real-IP $remote_addr;
+#         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#         proxy_cache_bypass $http_upgrade;
+#     }
+#
+#     # 其他 API 路由
+#     location / {
+#         proxy_pass http://localhost:3000;
+#         proxy_http_version 1.1;
+#         proxy_set_header Upgrade $http_upgrade;
+#         proxy_set_header Connection 'upgrade';
+#         proxy_set_header Host $host;
+#         proxy_set_header X-Real-IP $remote_addr;
+#         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#         proxy_cache_bypass $http_upgrade;
+#     }
+#
+#     # 静态文件（上传的媒体文件）
+#     location /uploads {
+#         alias /home/deploy/apps/teaching-case-service/uploads;
+#         expires 30d;
+#         add_header Cache-Control "public, immutable";
+#         add_header Access-Control-Allow-Origin *;
+#     }
 # }
 # 
-# # HTTP 重定向到 HTTPS
+# # HTTP 端口重定向到 HTTPS（可选）
 # server {
-#     listen 80;
+#     listen 8787;
 #     server_name your-domain.com www.your-domain.com;
 #     return 301 https://$server_name$request_uri;
 # }

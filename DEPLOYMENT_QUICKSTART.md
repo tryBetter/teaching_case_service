@@ -84,10 +84,14 @@ sudo npm install -g pm2
 ### 5. 配置防火墙
 
 ```bash
-# 开放端口
-sudo firewall-cmd --permanent --add-port=80/tcp
+# 开放端口（使用 8787 端口代替标准的 80 端口）
+sudo firewall-cmd --permanent --add-port=8787/tcp
 sudo firewall-cmd --permanent --add-port=443/tcp
 sudo firewall-cmd --reload
+
+# 如果需要使用标准 80 端口，也可以开放
+# sudo firewall-cmd --permanent --add-port=80/tcp
+# sudo firewall-cmd --reload
 ```
 
 ### 6. 部署应用
@@ -154,11 +158,15 @@ pm2 status
 # 查看日志
 pm2 logs teaching-case-service
 
-# 测试 API
+# 测试后端 API（直接访问）
 curl http://localhost:3000/api
 
+# 测试 Nginx 代理
+curl http://localhost:8787/api
+
 # 访问后台管理
-# 浏览器打开: http://your-domain.com/admin
+# 浏览器打开: http://your-domain.com:8787/admin
+# 或使用 IP: http://your-ip-address:8787/admin
 ```
 
 ---
@@ -235,7 +243,28 @@ sudo systemctl status nginx    # 查看状态
 
 ## ⚠️ 常见问题
 
-### 1. 502 Bad Gateway
+### 1. 端口访问问题
+
+**说明：** 本项目 Nginx 默认使用 **8787 端口**，避免占用标准的 80 端口
+
+```bash
+# 确保防火墙已开放 8787 端口
+sudo firewall-cmd --list-ports
+
+# 如果未开放，执行：
+sudo firewall-cmd --permanent --add-port=8787/tcp
+sudo firewall-cmd --reload
+
+# 如果需要使用标准 80 端口，修改 nginx.conf.example
+# 将 listen 8787; 改为 listen 80;
+```
+
+**访问方式：**
+- 通过 IP 访问：`http://服务器IP:8787/admin`
+- 通过域名访问：`http://your-domain.com:8787/admin`
+- 配置 SSL 后可使用 443 端口：`https://your-domain.com/admin`
+
+### 2. 502 Bad Gateway
 
 ```bash
 # 检查应用是否运行
@@ -245,7 +274,7 @@ pm2 status
 sudo setsebool -P httpd_can_network_connect 1
 ```
 
-### 2. 数据库连接失败
+### 3. 数据库连接失败
 
 ```bash
 # 检查 PostgreSQL 状态
@@ -255,7 +284,7 @@ sudo systemctl status postgresql-14
 sudo tail -f /var/lib/pgsql/14/data/log/postgresql-*.log
 ```
 
-### 3. 数据库权限错误
+### 4. 数据库权限错误
 
 **错误信息：** `permission denied to create database`
 
@@ -283,7 +312,7 @@ sudo vim /var/lib/pgsql/14/data/pg_hba.conf
 sudo systemctl restart postgresql-14
 ```
 
-### 4. 构建错误：xcopy command not found
+### 5. 构建错误：xcopy command not found
 
 **错误信息：** `sh: xcopy: command not found`
 
@@ -301,7 +330,7 @@ npm install
 npm run build
 ```
 
-### 5. 文件上传失败
+### 6. 文件上传失败
 
 ```bash
 # 检查权限
