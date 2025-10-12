@@ -54,9 +54,15 @@ sudo su - postgres
 psql
 
 # 在 psql 中执行：
-CREATE DATABASE teaching_case_db;
-CREATE USER teaching_user WITH PASSWORD 'your_password';
-GRANT ALL PRIVILEGES ON DATABASE teaching_case_db TO teaching_user;
+CREATE DATABASE class_case;
+CREATE USER service_admin WITH PASSWORD '6666667';
+GRANT ALL PRIVILEGES ON DATABASE class_case TO service_admin;
+
+# PostgreSQL 15+ 还需要额外授权 schema 权限
+\c class_case
+GRANT ALL ON SCHEMA public TO teaching_user;
+GRANT CREATE ON SCHEMA public TO teaching_user;
+
 \q
 
 # 退出
@@ -95,7 +101,7 @@ cd ~/apps
 git clone <your-repo-url> teaching-case-service
 cd teaching-case-service
 
-# 安装依赖
+# 安装依赖（包括 devDependencies，构建需要）
 npm install
 
 # 配置环境变量
@@ -249,7 +255,53 @@ sudo systemctl status postgresql-14
 sudo tail -f /var/lib/pgsql/14/data/log/postgresql-*.log
 ```
 
-### 3. 文件上传失败
+### 3. 数据库权限错误
+
+**错误信息：** `permission denied to create database`
+
+```bash
+# 方案1：手动创建数据库（推荐）
+sudo su - postgres
+psql
+
+# 创建数据库和用户
+CREATE DATABASE class_case;
+CREATE USER teaching_user WITH PASSWORD '你的密码';
+GRANT ALL PRIVILEGES ON DATABASE class_case TO teaching_user;
+
+# PostgreSQL 15+ 需要额外授权
+\c class_case
+GRANT ALL ON SCHEMA public TO teaching_user;
+GRANT CREATE ON SCHEMA public TO teaching_user;
+
+\q
+exit
+
+# 方案2：修改 pg_hba.conf 配置
+sudo vim /var/lib/pgsql/14/data/pg_hba.conf
+# 将 ident 改为 md5，然后重启 PostgreSQL
+sudo systemctl restart postgresql-14
+```
+
+### 4. 构建错误：xcopy command not found
+
+**错误信息：** `sh: xcopy: command not found`
+
+**原因：** 旧版本使用了 Windows 特定的 xcopy 命令
+
+**解决方案：**
+```bash
+# 确保项目使用最新版本的 package.json（已修复为跨平台）
+git pull origin main
+
+# 重新安装依赖
+npm install
+
+# 再次构建
+npm run build
+```
+
+### 5. 文件上传失败
 
 ```bash
 # 检查权限
