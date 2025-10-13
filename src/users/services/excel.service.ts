@@ -148,17 +148,53 @@ export class ExcelService {
   }
 
   /**
-   * 生成用户导入模板Excel文件
+   * 生成用户导入模板Excel文件（动态加载所有角色示例）
    * @returns Excel文件的Buffer
    */
-  generateUserTemplate(): Buffer {
+  async generateUserTemplate(): Promise<Buffer> {
     const headers = ['邮箱', '姓名', '密码', '角色'];
-    const sampleData = [
-      ['admin@example.com', '管理员', 'admin123', '超级管理员'],
-      ['teacher@example.com', '张老师', 'password123', '教师'],
-      ['assistant@example.com', '李助教', 'password456', '助教'],
-      ['student@example.com', '王同学', 'password789', '学生'],
-    ];
+
+    // 从数据库获取所有角色（排除超级管理员）
+    const roles = await this.prisma.role.findMany({
+      where: {
+        isActive: true,
+        name: { not: '超级管理员' }, // 排除超级管理员
+      },
+      orderBy: { id: 'asc' },
+    });
+
+    // 为每个角色生成一个示例行
+    const sampleData: string[][] = [];
+
+    // 示例用户名模板
+    const nameTemplates = ['张', '李', '王', '赵', '刘', '陈'];
+    const nameTypes: Record<string, string> = {
+      管理员: '管理员',
+      教师组长: '教师组长',
+      教师: '老师',
+      助教组长: '助教组长',
+      助教: '助教',
+      学生: '同学',
+    };
+
+    roles.forEach((role, index) => {
+      const namePrefix = nameTemplates[index % nameTemplates.length];
+      const nameSuffix = nameTypes[role.name] ?? '用户';
+      const sampleName = `${namePrefix}${nameSuffix}`;
+      const sampleEmail = `${role.name.toLowerCase().replace(/[^a-z]/g, '')}${index + 1}@example.com`;
+      const samplePassword = `password${index + 1}23`;
+
+      sampleData.push([sampleEmail, sampleName, samplePassword, role.name]);
+    });
+
+    // 如果没有角色数据，使用默认示例
+    if (sampleData.length === 0) {
+      sampleData.push(
+        ['admin@example.com', '张管理员', 'password123', '管理员'],
+        ['teacher@example.com', '李老师', 'password223', '教师'],
+        ['student@example.com', '王同学', 'password323', '学生'],
+      );
+    }
 
     const data = [headers, ...sampleData];
 
@@ -168,10 +204,10 @@ export class ExcelService {
 
     // 设置列宽
     const colWidths = [
-      { wch: 25 }, // 邮箱
+      { wch: 30 }, // 邮箱（加宽以容纳较长的邮箱）
       { wch: 15 }, // 姓名
       { wch: 20 }, // 密码
-      { wch: 10 }, // 角色
+      { wch: 15 }, // 角色（加宽以容纳"教师组长"等长角色名）
     ];
     worksheet['!cols'] = colWidths;
 

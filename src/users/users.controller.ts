@@ -198,9 +198,9 @@ export class UsersController {
   })
   @RequireAdmin()
   @Get('template')
-  downloadTemplate(@Res() res: Response) {
+  async downloadTemplate(@Res() res: Response) {
     try {
-      const templateBuffer = this.excelService.generateUserTemplate();
+      const templateBuffer = await this.excelService.generateUserTemplate();
 
       // 使用 RFC 5987 编码格式处理中文文件名
       const filename = encodeURIComponent('用户导入模板.xlsx');
