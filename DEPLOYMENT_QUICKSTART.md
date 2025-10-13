@@ -112,11 +112,19 @@ npm install
 cp .env.example .env
 vim .env  # 修改数据库连接等配置
 
+# 重要：配置 CORS（允许前端访问）
+# 在 .env 文件中添加或修改：
+# CORS_ORIGINS=http://你的服务器IP:8787,http://你的域名:8787
+# 例如：CORS_ORIGINS=http://8.8.8.8:8787,http://example.com:8787
+
 # 生成 Prisma Client
 npx prisma generate
 
 # 运行数据库迁移
 npx prisma migrate deploy
+
+# 初始化数据（创建角色、权限、超级管理员等）
+npm run seed
 
 # 编译项目
 npm run build
@@ -357,7 +365,9 @@ sudo chcon -R -t httpd_sys_content_t uploads/
 - [ ] 防火墙端口已开放
 - [ ] 项目代码已部署
 - [ ] 环境变量已配置
-- [ ] 数据库迁移已完成
+- [ ] 数据库迁移已完成（`npx prisma migrate deploy`）
+- [ ] 数据已初始化（`npm run seed`）
+- [ ] 超级管理员账号已创建（验证登录）
 - [ ] PM2 应用已启动
 - [ ] Nginx 已配置并运行
 - [ ] 可以通过域名访问
