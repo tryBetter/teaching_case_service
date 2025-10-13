@@ -151,18 +151,124 @@ export class ArticlesController {
 
   @Public()
   @ApiOperation({
-    summary: '获取所有文章（无分页，公开接口）',
+    summary: '获取所有文章（支持分页和高级查询，公开接口）',
     description:
-      '获取所有已发布的文章列表，无分页限制。仅返回未删除的文章。适用场景：前端首页文章列表、文章搜索、数据导出。注意：此接口不需要认证，任何人都可访问。',
+      '获取文章列表，支持分页和多条件查询。仅返回未删除的文章。适用场景：前端首页文章列表、文章搜索、分类浏览。支持关键词搜索、按作者筛选、按分类筛选、按时间排序等功能。注意：此接口不需要认证，任何人都可访问。',
+  })
+  @ApiQuery({
+    name: 'page',
+    description: '页码，从1开始，默认为1',
+    required: false,
+    type: Number,
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    description: '每页数量，默认为10，最大100',
+    required: false,
+    type: Number,
+    example: 10,
+  })
+  @ApiQuery({
+    name: 'search',
+    description: '搜索关键词，模糊匹配文章标题、内容和摘要',
+    required: false,
+    type: String,
+    example: '火箭发动机',
+  })
+  @ApiQuery({
+    name: 'authorId',
+    description: '作者ID，筛选指定作者的文章',
+    required: false,
+    type: Number,
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'categoryId',
+    description: '分类ID，筛选指定分类的文章',
+    required: false,
+    type: Number,
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'published',
+    description: '发布状态，true-已发布，false-草稿',
+    required: false,
+    type: Boolean,
+  })
+  @ApiQuery({
+    name: 'featured',
+    description: '是否为推荐文章，true-仅推荐，false-非推荐',
+    required: false,
+    type: Boolean,
+  })
+  @ApiQuery({
+    name: 'orderBy',
+    description:
+      '排序方式：createdAt_desc(创建时间倒序)、createdAt_asc(创建时间正序)、updatedAt_desc(更新时间倒序)、updatedAt_asc(更新时间正序)',
+    required: false,
+    type: String,
+    example: 'createdAt_desc',
   })
   @ApiResponse({
     status: 200,
-    description:
-      '返回文章数组，包含作者信息、分类信息、筛选条件等。按创建时间倒序排列',
+    description: '返回分页后的文章列表，包含总数、当前页、总页数等分页信息',
+    schema: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          description: '文章列表',
+        },
+        total: {
+          type: 'number',
+          description: '总数',
+        },
+        page: {
+          type: 'number',
+          description: '当前页',
+        },
+        limit: {
+          type: 'number',
+          description: '每页数量',
+        },
+        totalPages: {
+          type: 'number',
+          description: '总页数',
+        },
+      },
+    },
   })
   @Get('all')
-  findAll() {
-    return this.articlesService.findAll();
+  async findAll(
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
+    @Query('search') search?: string,
+    @Query('authorId') authorId?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('published') published?: string,
+    @Query('featured') featured?: string,
+    @Query('orderBy') orderBy: string = 'createdAt_desc',
+  ): Promise<{
+    data: any[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+    return await this.articlesService.findAllWithPagination({
+      page: parseInt(page) || 1,
+      limit: Math.min(parseInt(limit) || 10, 100), // 最大100条
+      search,
+      authorId: authorId ? parseInt(authorId) : undefined,
+      categoryId: categoryId ? parseInt(categoryId) : undefined,
+      published:
+        published === 'true' ? true : published === 'false' ? false : undefined,
+      featured:
+        featured === 'true' ? true : featured === 'false' ? false : undefined,
+      orderBy,
+    });
   }
 
   @ApiOperation({ summary: '根据条件筛选查询文章' })

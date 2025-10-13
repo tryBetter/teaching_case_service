@@ -95,6 +95,123 @@ export class ArticlesService {
   }
 
   /**
+   * 分页查询文章，支持高级查询参数
+   * @param params 查询参数
+   * @returns 分页后的文章列表
+   */
+  async findAllWithPagination(params: {
+    page: number;
+    limit: number;
+    search?: string;
+    authorId?: number;
+    categoryId?: number;
+    published?: boolean;
+    featured?: boolean;
+    orderBy?: string;
+  }): Promise<{
+    data: any[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const {
+      page,
+      limit,
+      search,
+      authorId,
+      categoryId,
+      published,
+      featured,
+      orderBy,
+    } = params;
+
+    // 构建查询条件
+    const where: Prisma.ArticleWhereInput = {
+      deletedAt: null, // 只查询未删除的文章
+    };
+
+    // 关键词搜索（模糊匹配标题、内容、摘要）
+    if (search) {
+      where.OR = [
+        { title: { contains: search } },
+        { content: { contains: search } },
+        { summary: { contains: search } },
+      ];
+    }
+
+    // 按作者筛选
+    if (authorId !== undefined) {
+      where.authorId = authorId;
+    }
+
+    // 按分类筛选
+    if (categoryId !== undefined) {
+      where.categoryId = categoryId;
+    }
+
+    // 按发布状态筛选
+    if (published !== undefined) {
+      where.published = published;
+    }
+
+    // 按推荐状态筛选
+    if (featured !== undefined) {
+      where.featured = featured;
+    }
+
+    // 构建排序规则
+    let orderByClause: Prisma.ArticleOrderByWithRelationInput = {
+      createdAt: 'desc',
+    };
+    if (orderBy) {
+      const [field, direction] = orderBy.split('_');
+      if (field === 'createdAt' || field === 'updatedAt') {
+        orderByClause = { [field]: direction === 'asc' ? 'asc' : 'desc' };
+      }
+    }
+
+    // 查询总数
+    const total = await this.prisma.article.count({ where });
+
+    // 分页查询
+    const skip = (page - 1) * limit;
+    const data = await this.prisma.article.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: orderByClause,
+      include: {
+        category: true,
+        filterConditions: {
+          include: {
+            filterCondition: {
+              include: {
+                type: true,
+              },
+            },
+          },
+        },
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /**
    * 根据传入的条件筛选查询文章，传入的条件为标题、是否模糊查询、作者id、是否发布、分类ID、筛选条件ID列表
    * @param title 标题
    * @param contains 是否模糊查询
