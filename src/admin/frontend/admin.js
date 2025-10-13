@@ -293,6 +293,13 @@ let currentDeleteFilter = 'normal'; // 'normal' | 'all' | 'deleted'
 
 // 加载用户列表
 async function loadUsers(page = 1, pageSize = 10, search = '', role = '') {
+  // 确保角色筛选选项已加载
+  const roleFilter = document.getElementById('userRoleFilter');
+  if (roleFilter && roleFilter.options.length === 1) {
+    // 只有"所有角色"选项，需要加载其他角色
+    await loadRoleFilterOptions();
+  }
+
   try {
     // 构建查询参数
     const params = new URLSearchParams({
@@ -479,7 +486,46 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // 加载分类和作者选项
   loadArticleFilters();
+
+  // 加载角色筛选选项
+  loadRoleFilterOptions();
 });
+
+// 加载角色筛选选项
+async function loadRoleFilterOptions() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/roles`, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
+
+    if (response.ok) {
+      const roles = await response.json();
+      const roleFilter = document.getElementById('userRoleFilter');
+
+      if (roleFilter && roles.length > 0) {
+        // 保留"所有角色"选项，添加动态加载的角色
+        // 清空现有选项（除了第一个"所有角色"）
+        while (roleFilter.options.length > 1) {
+          roleFilter.remove(1);
+        }
+
+        // 添加所有角色选项
+        roles.forEach((role) => {
+          const option = document.createElement('option');
+          option.value = role.name;
+          option.textContent = role.name;
+          roleFilter.appendChild(option);
+        });
+
+        console.log(`已加载 ${roles.length} 个角色到筛选器`);
+      }
+    }
+  } catch (error) {
+    console.error('加载角色筛选选项失败:', error);
+  }
+}
 
 // 加载文章筛选选项
 async function loadArticleFilters() {
