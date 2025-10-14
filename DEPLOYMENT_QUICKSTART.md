@@ -112,10 +112,19 @@ npm install
 cp .env.example .env
 vim .env  # 修改数据库连接等配置
 
-# 重要：配置 CORS（允许前端访问）
-# 在 .env 文件中添加或修改：
-# CORS_ORIGINS=http://你的服务器IP:8787,http://你的域名:8787
-# 例如：CORS_ORIGINS=http://8.8.8.8:8787,http://example.com:8787
+# 重要配置项：
+# 1. 数据库连接
+#    DATABASE_URL="postgresql://teaching_user:6666667@localhost:5432/class_case"
+#
+# 2. BASE_URL（媒体文件访问地址，非常重要！）
+#    BASE_URL="http://你的服务器IP:8787"
+#    或 BASE_URL="http://你的域名:8787"
+#    或 BASE_URL="https://你的域名"（配置SSL后）
+#
+# 3. CORS 跨域配置
+#    CORS_ORIGINS=http://你的服务器IP:8787,http://你的域名:8787
+#
+# 注意：BASE_URL 和 CORS_ORIGINS 应该使用相同的域名和端口
 
 # 生成 Prisma Client
 npx prisma generate

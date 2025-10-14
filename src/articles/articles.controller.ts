@@ -392,28 +392,30 @@ export class ArticlesController {
     return this.articlesService.findOne(+id);
   }
 
-  @ApiOperation({ summary: '发布文章' })
+  @ApiOperation({
+    summary: '更新文章',
+    description:
+      '【教师组长、教师、助教组长、助教专用】更新文章的标题、内容、摘要、封面、关键词、分类、筛选条件等信息。支持部分更新，只需传递要修改的字段。教师只能更新自己创建的文章，教师组长可以更新所有教师的文章，助教（组长）可以更新关联教师的文章。适用场景：修改文章内容、完善文章信息、修正错误、更新分类标签等。',
+  })
+  @ApiParam({ name: 'id', description: '要更新的文章ID', example: 1 })
   @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        id: { type: 'number', description: '文章ID' },
-      },
-    },
+    type: UpdateArticleDto,
+    description:
+      '更新数据，所有字段都是可选的，只需传递要更新的字段。例如只更新标题：{"title":"新标题"}',
   })
-  @ApiResponse({ status: 200, description: '文章发布成功' })
-  @ApiResponse({ status: 404, description: '文章不存在' })
+  @ApiResponse({
+    status: 200,
+    description: '文章更新成功，返回更新后的完整文章信息',
+  })
+  @ApiResponse({ status: 404, description: '文章不存在或已被删除' })
   @ApiResponse({
     status: 403,
-    description: '权限不足，需要教师组长或教师角色',
+    description:
+      '权限不足。教师只能更新自己的文章，助教只能更新关联教师的文章。如果没有更新权限，请联系教师组长或超级管理员',
   })
-  @ApiOperation({ summary: '更新文章' })
-  @ApiParam({ name: 'id', description: '文章ID' })
-  @ApiResponse({ status: 200, description: '文章更新成功' })
-  @ApiResponse({ status: 404, description: '文章不存在' })
   @ApiResponse({
-    status: 403,
-    description: '权限不足，需要教师组长、教师、助教组长或助教角色',
+    status: 400,
+    description: '请求参数错误：分类ID无效、筛选条件ID不存在等',
   })
   @RequireTeacherLeaderOrTeacherOrAssistantLeaderOrAssistant()
   @Patch(':id')

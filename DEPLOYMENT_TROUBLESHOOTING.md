@@ -483,7 +483,54 @@ pm2 logs teaching-case-service --lines 20
 
 ---
 
-### 问题 7：超级管理员未创建
+### 问题 7：媒体文件URL是 localhost:3000
+
+**错误信息：** 上传文件后返回的URL是 `http://localhost:3000/uploads/...`，无法在生产环境访问
+
+**原因：** 环境变量 `BASE_URL` 未配置或配置错误
+
+**解决方案：**
+```bash
+# 1. 编辑 .env 文件
+cd ~/apps/teaching-case-service
+vim .env
+
+# 2. 修改 BASE_URL 为实际访问地址
+# 使用IP: BASE_URL="http://8.8.8.8:8787"
+# 使用域名: BASE_URL="http://example.com:8787"
+# 使用HTTPS: BASE_URL="https://example.com"
+
+# 3. 重启应用
+pm2 restart teaching-case-service
+
+# 4. 测试上传
+curl -X POST http://localhost:3000/media/upload \
+  -H "Authorization: Bearer <token>" \
+  -F "file=@test.jpg" | grep url
+
+# 应该返回正确的URL，如：
+# "url": "http://8.8.8.8:8787/uploads/images/xxx.jpg"
+```
+
+**如果已有数据需要更新：**
+```bash
+# 批量更新数据库中的URL
+psql -h localhost -U teaching_user -d class_case << EOF
+-- 备份
+CREATE TABLE "Media_backup" AS SELECT * FROM "Media";
+
+-- 更新URL
+UPDATE "Media"
+SET url = REPLACE(url, 'http://localhost:3000', 'http://8.8.8.8:8787')
+WHERE url LIKE 'http://localhost:3000%';
+EOF
+```
+
+**详细文档：** 参考 [MEDIA_URL_CONFIG_GUIDE.md](./MEDIA_URL_CONFIG_GUIDE.md)
+
+---
+
+### 问题 8：超级管理员未创建
 
 **错误信息：** 无法登录后台，提示用户不存在或密码错误
 

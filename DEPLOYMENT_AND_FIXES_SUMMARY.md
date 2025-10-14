@@ -158,6 +158,42 @@ curl -X POST http://localhost:3000/auth/login \
 
 ---
 
+### 问题 7：上传媒体文件URL是 localhost:3000
+
+**错误：** 上传文件后返回 `http://localhost:3000/uploads/...`，生产环境无法访问
+
+**原因：** 环境变量 `BASE_URL` 未配置
+
+**解决方案：**
+
+在 `.env` 文件中配置：
+```bash
+# 使用IP
+BASE_URL="http://8.8.8.8:8787"
+
+# 使用域名
+BASE_URL="http://example.com:8787"
+
+# 使用HTTPS
+BASE_URL="https://example.com"
+```
+
+重启应用：
+```bash
+pm2 restart teaching-case-service
+```
+
+**已有数据迁移：**
+```sql
+UPDATE "Media"
+SET url = REPLACE(url, 'http://localhost:3000', 'http://8.8.8.8:8787')
+WHERE url LIKE 'http://localhost:3000%';
+```
+
+**文档：** `MEDIA_URL_CONFIG_GUIDE.md`
+
+---
+
 ## 🎯 功能增强
 
 ### 1. 文章查询接口增强
@@ -238,7 +274,14 @@ CORS_ORIGINS=http://your-domain.com:8787,https://your-domain.com
 ```bash
 DATABASE_URL="postgresql://teaching_user:6666667@localhost:5432/class_case"
 PORT=3000
-CORS_ORIGINS=http://服务器IP:8787
+
+# 基础URL - 媒体文件访问地址（重要！）
+BASE_URL="http://服务器IP:8787"
+
+# CORS 跨域配置
+CORS_ORIGINS="http://服务器IP:8787"
+
+# 超级管理员配置
 SUPER_ADMIN_EMAIL=admin@mail.com
 SUPER_ADMIN_PASSWORD=SuperAdmin123!
 AUTO_CREATE_SUPER_ADMIN=true
