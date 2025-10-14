@@ -256,7 +256,6 @@ export class ArticlesController {
     limit: number;
     totalPages: number;
   }> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
     return await this.articlesService.findAllWithPagination({
       page: parseInt(page) || 1,
       limit: Math.min(parseInt(limit) || 10, 100), // 最大100条

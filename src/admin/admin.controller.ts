@@ -72,54 +72,13 @@ export class AdminController {
   }
 
   @ApiOperation({
-    summary: '获取后台管理概览',
-    description: '获取后台管理系统的概览信息，包括系统状态、统计数据等',
+    summary: '后台管理API信息',
+    description:
+      '【超级管理员专用】获取后台管理系统API信息，包括可用的端点列表。适用场景：了解后台管理系统提供的API接口、API文档生成、前端路由配置参考。',
   })
   @ApiResponse({
     status: 200,
-    description: '获取概览信息成功',
-    schema: {
-      type: 'object',
-      properties: {
-        systemInfo: {
-          type: 'object',
-          properties: {
-            version: { type: 'string', example: '1.0.0' },
-            environment: { type: 'string', example: 'production' },
-            uptime: { type: 'string', example: '2 days, 5 hours' },
-          },
-        },
-        statistics: {
-          type: 'object',
-          properties: {
-            totalUsers: { type: 'number', example: 150 },
-            totalArticles: { type: 'number', example: 1250 },
-            totalComments: { type: 'number', example: 5600 },
-            totalMedia: { type: 'number', example: 320 },
-          },
-        },
-        recentActivity: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              type: { type: 'string', example: 'user_registration' },
-              description: { type: 'string', example: '新用户注册' },
-              timestamp: { type: 'string', format: 'date-time' },
-            },
-          },
-        },
-      },
-    },
-  })
-  @ApiResponse({ status: 403, description: '权限不足，需要超级管理员权限' })
-  @ApiOperation({
-    summary: '后台管理首页',
-    description: '后台管理系统的首页信息',
-  })
-  @ApiResponse({
-    status: 200,
-    description: '获取首页信息成功',
+    description: '获取API信息成功',
     schema: {
       type: 'object',
       properties: {
@@ -138,6 +97,7 @@ export class AdminController {
       },
     },
   })
+  @ApiResponse({ status: 403, description: '权限不足，需要超级管理员权限' })
   @UseGuards(SuperAdminGuard)
   @RequireSuperAdmin()
   @Get('api')

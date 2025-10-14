@@ -303,9 +303,22 @@ export class MediaController {
     return this.adminMediaService.getMediaTypeDistribution();
   }
 
-  @ApiOperation({ summary: '获取最近上传的媒体文件（管理员）' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
-  @ApiResponse({ status: 200, description: '返回最近上传的媒体文件列表' })
+  @ApiOperation({
+    summary: '获取最近上传的媒体文件（管理员）',
+    description:
+      '【超级管理员专用】获取最近上传的媒体文件列表，按上传时间倒序排列。可以指定返回数量限制。适用场景：后台管理系统首页展示最近上传的媒体、监控上传活动、快速访问最新资源。',
+  })
+  @ApiQuery({
+    name: 'limit',
+    description: '返回数量限制，默认10条',
+    required: false,
+    type: Number,
+    example: 10,
+  })
+  @ApiResponse({
+    status: 200,
+    description: '返回最近上传的媒体文件列表，包含文件信息和上传者信息',
+  })
   @RequireSuperAdmin()
   @Get('recent')
   async getRecentMedia(@Query('limit') limit?: string) {
@@ -340,13 +353,46 @@ export class MediaController {
 
   // ==================== 管理员专用功能 ====================
 
-  @ApiOperation({ summary: '批量删除媒体文件（管理员）' })
+  @ApiOperation({
+    summary: '批量删除媒体文件（管理员）',
+    description:
+      '【超级管理员专用】批量删除多个媒体文件。可以一次性删除多个不再使用的媒体文件，提高管理效率。适用场景：清理无用的媒体文件、批量删除测试文件、释放存储空间。注意：删除前请确认文件未被文章引用，否则可能影响文章显示。',
+  })
   @ApiQuery({
     name: 'ids',
-    description: '媒体ID列表（逗号分隔）',
+    description: '媒体ID列表，多个ID用逗号分隔，例如：1,2,3',
+    required: true,
+    type: String,
     example: '1,2,3',
   })
-  @ApiResponse({ status: 200, description: '返回删除结果' })
+  @ApiResponse({
+    status: 200,
+    description:
+      '返回批量删除结果，包含成功删除数量、失败数量和详细的成功/失败列表',
+    schema: {
+      type: 'object',
+      properties: {
+        deletedCount: { type: 'number', description: '成功删除的数量' },
+        failedCount: { type: 'number', description: '删除失败的数量' },
+        successIds: {
+          type: 'array',
+          items: { type: 'number' },
+          description: '成功删除的媒体ID列表',
+        },
+        failedIds: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'number', description: '媒体ID' },
+              error: { type: 'string', description: '失败原因' },
+            },
+          },
+          description: '删除失败的媒体ID和原因',
+        },
+      },
+    },
+  })
   @RequireSuperAdmin()
   @Delete('batch')
   async batchRemove(@Query('ids') ids: string) {
