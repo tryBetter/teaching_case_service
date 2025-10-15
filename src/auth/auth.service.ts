@@ -66,4 +66,37 @@ export class AuthService {
       },
     };
   }
+
+  async getCurrentUser(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        roleId: true,
+        status: true,
+        role: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('用户不存在');
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: normalizeRoleName(user.role.name),
+      roleId: user.roleId,
+      status: user.status,
+      userId: user.id, // 保持向后兼容
+    };
+  }
 }
