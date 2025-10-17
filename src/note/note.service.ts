@@ -77,7 +77,7 @@ export class NoteService {
         select: {
           id: true,
           title: true,
-          content: true,
+          // content: false, // 列表接口不返回文章内容
           published: true,
           createdAt: true,
           author: {

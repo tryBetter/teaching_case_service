@@ -127,7 +127,7 @@ export class NoteController {
   @ApiOperation({
     summary: '获取我的笔记列表',
     description:
-      '获取当前用户的所有笔记，按更新时间倒序排列。包含完整的用户和文章信息。',
+      '获取当前用户的所有笔记，按更新时间倒序排列。包含用户和文章基本信息。注意：此接口不返回关联文章的内容（content字段），只返回文章标题、ID等基本信息。如需查看文章完整内容，请使用文章详情接口。',
   })
   @ApiResponse({
     status: 200,
@@ -171,7 +171,7 @@ export class NoteController {
             properties: {
               id: { type: 'number', example: 1 },
               title: { type: 'string', example: '如何学习NestJS' },
-              content: { type: 'string', example: '文章内容...' },
+              // 注意：列表接口不返回 content 字段
               published: { type: 'boolean', example: true },
               createdAt: {
                 type: 'string',
@@ -187,7 +187,7 @@ export class NoteController {
                 description: '文章作者信息',
               },
             },
-            description: '文章信息',
+            description: '文章基本信息（不包含文章内容）',
           },
         },
       },
@@ -308,7 +308,7 @@ export class NoteController {
   @ApiOperation({
     summary: '获取笔记详情',
     description:
-      '根据笔记ID获取笔记详情。用户只能查看自己的笔记，除非是公开访问。',
+      '根据笔记ID获取笔记详情。用户只能查看自己的笔记，除非是公开访问。此接口返回完整的笔记信息，包括关联文章的完整内容（content字段）。',
   })
   @ApiParam({
     name: 'id',
