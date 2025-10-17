@@ -153,7 +153,7 @@ export class ArticlesController {
   @ApiOperation({
     summary: '获取所有文章（支持分页和高级查询，公开接口）',
     description:
-      '获取文章列表，支持分页和多条件查询。仅返回未删除的文章。适用场景：前端首页文章列表、文章搜索、分类浏览。支持关键词搜索、按作者筛选、按分类筛选、按时间排序等功能。注意：此接口不需要认证，任何人都可访问。',
+      '获取文章列表，支持分页和多条件查询。仅返回未删除的文章。适用场景：前端首页文章列表、文章搜索、分类浏览。支持关键词搜索、按作者筛选、按分类筛选、按时间排序等功能。注意：1) 此接口不需要认证，任何人都可访问；2) 此接口不返回文章内容（content字段），只返回标题、摘要等基本信息，文章内容请通过文章详情接口单独获取。',
   })
   @ApiQuery({
     name: 'page',
@@ -270,7 +270,11 @@ export class ArticlesController {
     });
   }
 
-  @ApiOperation({ summary: '根据条件筛选查询文章' })
+  @ApiOperation({
+    summary: '根据条件筛选查询文章',
+    description:
+      '根据多个条件筛选查询文章列表。支持按标题、作者、发布状态、分类、筛选条件等多维度查询。注意：此接口不返回文章内容（content字段），只返回文章基本信息。文章内容请通过文章详情接口单独获取。',
+  })
   @ApiQuery({ name: 'title', description: '文章标题', required: false })
   @ApiQuery({
     name: 'contains',
@@ -304,7 +308,10 @@ export class ArticlesController {
     isArray: true,
   })
   @Public()
-  @ApiResponse({ status: 200, description: '筛选查询成功' })
+  @ApiResponse({
+    status: 200,
+    description: '筛选查询成功，返回文章列表（不包含文章内容）',
+  })
   @Get('many')
   findMany(
     @Query('title') title: string,
@@ -383,7 +390,16 @@ export class ArticlesController {
     return this.adminArticlesService.getArticleStats();
   }
 
-  @ApiResponse({ status: 200, description: '获取文章成功' })
+  @ApiOperation({
+    summary: '获取文章详情',
+    description:
+      '根据文章ID获取文章的完整信息，包括文章内容、评论、分类、筛选条件等。此接口返回完整的文章内容（content字段）。适用场景：文章阅读页面、文章编辑预览。注意：此接口为公开接口，不需要认证。',
+  })
+  @ApiParam({ name: 'id', description: '文章ID', example: 1, type: Number })
+  @ApiResponse({
+    status: 200,
+    description: '获取文章成功，返回完整的文章信息，包括文章内容',
+  })
   @Public()
   @ApiResponse({ status: 404, description: '文章不存在' })
   @Get(':id')

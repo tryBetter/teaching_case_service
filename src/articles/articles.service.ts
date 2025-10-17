@@ -64,15 +64,28 @@ export class ArticlesService {
   }
 
   /**
-   * 查询所有文章（不包括已删除的）
-   * @returns 所有文章
+   * 查询所有文章（不包括已删除的，不包含文章内容）
+   * @returns 所有文章列表（不包含content字段）
    */
   findAll() {
     return this.prisma.article.findMany({
       where: {
         deletedAt: null, // 只查询未删除的文章
       },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        // content: false, // 不查询文章内容
+        cover: true,
+        summary: true,
+        keywords: true,
+        featured: true,
+        published: true,
+        deletedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        authorId: true,
+        categoryId: true,
         category: true,
         filterConditions: {
           include: {
@@ -97,7 +110,7 @@ export class ArticlesService {
   /**
    * 分页查询文章，支持高级查询参数
    * @param params 查询参数
-   * @returns 分页后的文章列表
+   * @returns 分页后的文章列表（不包含文章内容）
    */
   async findAllWithPagination(params: {
     page: number;
@@ -174,14 +187,27 @@ export class ArticlesService {
     // 查询总数
     const total = await this.prisma.article.count({ where });
 
-    // 分页查询
+    // 分页查询，不包含文章内容（content字段）
     const skip = (page - 1) * limit;
     const data = await this.prisma.article.findMany({
       where,
       skip,
       take: limit,
       orderBy: orderByClause,
-      include: {
+      select: {
+        id: true,
+        title: true,
+        // content: false, // 不查询文章内容
+        cover: true,
+        summary: true,
+        keywords: true,
+        featured: true,
+        published: true,
+        deletedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        authorId: true,
+        categoryId: true,
         category: true,
         filterConditions: {
           include: {
@@ -219,7 +245,7 @@ export class ArticlesService {
    * @param published 是否发布
    * @param categoryId 分类ID
    * @param filterConditionIds 筛选条件ID列表
-   * @returns 筛选后的文章
+   * @returns 筛选后的文章（不包含文章内容）
    */
   findMany(
     title: string,
@@ -250,7 +276,20 @@ export class ArticlesService {
 
     return this.prisma.article.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        title: true,
+        // content: false, // 不查询文章内容
+        cover: true,
+        summary: true,
+        keywords: true,
+        featured: true,
+        published: true,
+        deletedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        authorId: true,
+        categoryId: true,
         category: true,
         filterConditions: {
           include: {
