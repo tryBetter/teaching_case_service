@@ -333,13 +333,17 @@ async function loadUsers(page = 1, pageSize = 10, search = '', role = '') {
 
       if (data.data && data.data.length > 0) {
         tbody.innerHTML = data.data
-          .map(
-            (user) => `
+          .map((user) => {
+            const roleName = user.role
+              ? user.role.name || '未知角色'
+              : '未知角色';
+
+            return `
                     <tr>
                         <td>${user.id}</td>
                         <td>${user.name || '未设置'}</td>
-                        <td>${user.email}</td>
-                        <td><span class="badge bg-primary">${user.role.name}</span></td>
+                        <td>${user.email || '未设置'}</td>
+                        <td><span class="badge bg-primary">${roleName}</span></td>
                         <td>
                             <span class="badge ${user.status === 'ACTIVE' ? 'bg-success' : 'bg-secondary'}">
                                 ${user.status === 'ACTIVE' ? '活跃' : '禁用'}
@@ -361,8 +365,8 @@ async function loadUsers(page = 1, pageSize = 10, search = '', role = '') {
                             }
                         </td>
                     </tr>
-                `,
-          )
+                `;
+          })
           .join('');
 
         // 更新分页组件
@@ -951,12 +955,19 @@ async function loadArticles(
                 `;
             }
 
+            const authorName = article.author
+              ? article.author.name || article.author.email || '未知作者'
+              : '未知作者';
+            const categoryName = article.category
+              ? article.category.name || '未分类'
+              : '未分类';
+
             return `
                 <tr>
                   <td>${article.id}</td>
-                  <td>${article.title}</td>
-                  <td>${article.author.name || article.author.email}</td>
-                  <td>${article.category.name}</td>
+                  <td>${article.title || '无标题'}</td>
+                  <td>${authorName}</td>
+                  <td>${categoryName}</td>
                   <td>${statusBadge}</td>
                   <td>${timeDisplay}</td>
                   <td>${actionButtons}</td>
@@ -1109,13 +1120,23 @@ async function loadComments() {
 
       if (data.data && data.data.length > 0) {
         tbody.innerHTML = data.data
-          .map(
-            (comment) => `
+          .map((comment) => {
+            const content = comment.content || '';
+            const displayContent =
+              content.length > 50 ? content.substring(0, 50) + '...' : content;
+            const authorName = comment.author
+              ? comment.author.name || comment.author.email || '未知作者'
+              : '未知作者';
+            const articleTitle = comment.article
+              ? comment.article.title || '未知文章'
+              : '未知文章';
+
+            return `
                     <tr>
                         <td>${comment.id}</td>
-                        <td>${comment.content.length > 50 ? comment.content.substring(0, 50) + '...' : comment.content}</td>
-                        <td>${comment.author.name || comment.author.email}</td>
-                        <td>${comment.article.title}</td>
+                        <td>${displayContent}</td>
+                        <td>${authorName}</td>
+                        <td>${articleTitle}</td>
                         <td>${formatDate(comment.createdAt)}</td>
                         <td>
                             <button class="btn btn-sm btn-outline-danger" onclick="deleteComment(${comment.id})">
@@ -1123,8 +1144,8 @@ async function loadComments() {
                             </button>
                         </td>
                     </tr>
-                `,
-          )
+                `;
+          })
           .join('');
       } else {
         tbody.innerHTML =
@@ -1153,13 +1174,23 @@ async function loadNotes() {
 
       if (data.data && data.data.length > 0) {
         tbody.innerHTML = data.data
-          .map(
-            (note) => `
+          .map((note) => {
+            const content = note.content || '';
+            const displayContent =
+              content.length > 50 ? content.substring(0, 50) + '...' : content;
+            const userName = note.user
+              ? note.user.name || note.user.email || '未知用户'
+              : '未知用户';
+            const articleTitle = note.article
+              ? note.article.title || '未知文章'
+              : '未知文章';
+
+            return `
                     <tr>
                         <td>${note.id}</td>
-                        <td>${note.content.length > 50 ? note.content.substring(0, 50) + '...' : note.content}</td>
-                        <td>${note.user.name || note.user.email}</td>
-                        <td>${note.article.title}</td>
+                        <td>${displayContent}</td>
+                        <td>${userName}</td>
+                        <td>${articleTitle}</td>
                         <td>${formatDate(note.createdAt)}</td>
                         <td>
                             <button class="btn btn-sm btn-outline-danger" onclick="deleteNote(${note.id})">
@@ -1167,8 +1198,8 @@ async function loadNotes() {
                             </button>
                         </td>
                     </tr>
-                `,
-          )
+                `;
+          })
           .join('');
       } else {
         tbody.innerHTML =
