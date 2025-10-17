@@ -59,13 +59,19 @@ export class NoteService {
    * 获取用户的所有笔记
    * @param userId 用户ID
    * @param options 分页选项
-   * @returns 用户笔记列表
+   * @returns 用户笔记列表（不包含笔记内容）
    */
   async findAll(userId?: number, options?: { page?: number; limit?: number }) {
     const { page, limit } = options || {};
     const where = userId ? { userId } : {};
 
-    const include = {
+    const select = {
+      id: true,
+      // content: false, // 列表接口不返回笔记内容
+      userId: true,
+      articleId: true,
+      createdAt: true,
+      updatedAt: true,
       user: {
         select: {
           id: true,
@@ -96,7 +102,7 @@ export class NoteService {
       const [data, total] = await Promise.all([
         this.prisma.note.findMany({
           where,
-          include,
+          select,
           orderBy: { updatedAt: 'desc' },
           skip,
           take: limit,
@@ -118,7 +124,7 @@ export class NoteService {
     // 否则返回所有数据（保持向后兼容）
     return this.prisma.note.findMany({
       where,
-      include,
+      select,
       orderBy: {
         updatedAt: 'desc',
       },
@@ -129,7 +135,7 @@ export class NoteService {
    * 获取指定文章的笔记列表
    * @param articleId 文章ID
    * @param userId 用户ID（可选，如果提供则只返回该用户的笔记）
-   * @returns 文章笔记列表
+   * @returns 文章笔记列表（不包含笔记内容）
    */
   async findByArticle(articleId: number, userId?: number) {
     const where: { articleId: number; userId?: number } = { articleId };
@@ -140,7 +146,13 @@ export class NoteService {
 
     return this.prisma.note.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        // content: false, // 列表接口不返回笔记内容
+        userId: true,
+        articleId: true,
+        createdAt: true,
+        updatedAt: true,
         user: {
           select: {
             id: true,

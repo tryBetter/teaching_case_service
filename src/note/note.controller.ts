@@ -127,7 +127,7 @@ export class NoteController {
   @ApiOperation({
     summary: '获取我的笔记列表',
     description:
-      '获取当前用户的所有笔记，按更新时间倒序排列。包含用户和文章基本信息。注意：此接口不返回关联文章的内容（content字段），只返回文章标题、ID等基本信息。如需查看文章完整内容，请使用文章详情接口。',
+      '获取当前用户的所有笔记，按更新时间倒序排列。包含用户和文章基本信息。注意：1) 此接口不返回笔记内容（content字段），只返回笔记ID、时间等基本信息；2) 不返回关联文章的内容，只返回文章标题、ID等基本信息。如需查看完整内容，请使用笔记详情接口。',
   })
   @ApiResponse({
     status: 200,
@@ -138,11 +138,7 @@ export class NoteController {
         type: 'object',
         properties: {
           id: { type: 'number', example: 1, description: '笔记ID' },
-          content: {
-            type: 'string',
-            example: '这篇文章很有用，特别是关于NestJS的依赖注入部分。',
-            description: '笔记内容',
-          },
+          // 注意：列表接口不返回笔记内容 content 字段
           userId: { type: 'number', example: 1, description: '用户ID' },
           articleId: { type: 'number', example: 1, description: '文章ID' },
           createdAt: {
@@ -171,7 +167,7 @@ export class NoteController {
             properties: {
               id: { type: 'number', example: 1 },
               title: { type: 'string', example: '如何学习NestJS' },
-              // 注意：列表接口不返回 content 字段
+              // 注意：列表接口不返回文章内容 content 字段
               published: { type: 'boolean', example: true },
               createdAt: {
                 type: 'string',
@@ -235,7 +231,7 @@ export class NoteController {
   @ApiOperation({
     summary: '获取文章笔记列表',
     description:
-      '获取指定文章的所有笔记。如果用户已登录，可以查看所有笔记；如果未登录，只能查看公开文章的笔记。',
+      '获取指定文章的所有笔记。如果用户已登录，可以查看所有笔记；如果未登录，只能查看公开文章的笔记。注意：此接口不返回笔记内容（content字段），只返回笔记ID、时间等基本信息。如需查看完整笔记内容，请使用笔记详情接口。',
   })
   @ApiParam({
     name: 'articleId',
@@ -258,11 +254,7 @@ export class NoteController {
         type: 'object',
         properties: {
           id: { type: 'number', example: 1, description: '笔记ID' },
-          content: {
-            type: 'string',
-            example: '这篇文章很有用，特别是关于NestJS的依赖注入部分。',
-            description: '笔记内容',
-          },
+          // 注意：列表接口不返回笔记内容 content 字段
           userId: { type: 'number', example: 1, description: '用户ID' },
           articleId: { type: 'number', example: 1, description: '文章ID' },
           createdAt: {
@@ -270,6 +262,12 @@ export class NoteController {
             format: 'date-time',
             example: '2024-01-01T00:00:00.000Z',
             description: '创建时间',
+          },
+          updatedAt: {
+            type: 'string',
+            format: 'date-time',
+            example: '2024-01-01T00:00:00.000Z',
+            description: '更新时间',
           },
           user: {
             type: 'object',
@@ -287,7 +285,7 @@ export class NoteController {
               title: { type: 'string', example: '如何学习NestJS' },
               published: { type: 'boolean', example: true },
             },
-            description: '文章信息',
+            description: '文章基本信息（不包含文章内容）',
           },
         },
       },
