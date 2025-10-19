@@ -315,7 +315,7 @@ export class MediaService {
   private async generateVideoPreviewIfNeeded(media: {
     id: number;
     type: string;
-    previewBase64: string | null;
+    previewBase64?: string | null;
     originalName?: string | null;
     url: string;
     [key: string]: any;
