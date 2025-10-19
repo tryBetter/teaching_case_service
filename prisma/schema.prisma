@@ -79,6 +79,7 @@ model Media {
   url          String
   originalName String?  // 原始文件名
   size         Int?     // 文件大小（字节）
+  previewBase64 String? // 预览图片的base64字符串
   createdAt    DateTime @default(now())
 
   // 上传者关联

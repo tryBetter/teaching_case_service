@@ -74,7 +74,7 @@ export class MediaController {
   @ApiOperation({
     summary: '上传媒体文件',
     description:
-      '【教师和教师组长专用】上传图片或视频文件到服务器。文件会自动按类型分类存储，并生成可访问的HTTP URL。可以在上传时关联到指定的文章。适用场景：上传教学案例配图、上传实验视频、为文章添加多媒体素材。支持格式：图片(JPEG/PNG/GIF/WebP)、视频(MP4/AVI/MOV/WMV)。大小限制：图片≤50MB，视频≤1GB。上传后的文件会记录上传者信息，便于追溯和管理。',
+      '【教师和教师组长专用】上传图片或视频文件到服务器。文件会自动按类型分类存储，并生成可访问的HTTP URL和预览图片base64字符串。图片会生成压缩预览，视频会提取第一帧作为预览。可以在上传时关联到指定的文章。适用场景：上传教学案例配图、上传实验视频、为文章添加多媒体素材。支持格式：图片(JPEG/PNG/GIF/WebP)、视频(MP4/AVI/MOV/WMV)。大小限制：图片≤50MB，视频≤1GB。上传后的文件会记录上传者信息，便于追溯和管理。',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -135,6 +135,12 @@ export class MediaController {
           type: 'string',
           description: '文件MIME类型',
           example: 'image/jpeg',
+        },
+        previewBase64: {
+          type: 'string',
+          description: '预览图片的base64字符串（图片为压缩后，视频为第一帧）',
+          example: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD...',
+          nullable: true,
         },
         createdAt: {
           type: 'string',

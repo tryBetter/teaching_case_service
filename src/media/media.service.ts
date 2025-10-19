@@ -5,6 +5,8 @@ import { UpdateMediaDto } from './dto/update-media.dto';
 import type { UploadedFile as UploadedFileInterface } from './interfaces/uploaded-file.interface';
 import * as path from 'path';
 import * as fs from 'fs';
+import { PreviewGeneratorUtil } from './utils/preview-generator.util';
+import { URL } from 'url';
 
 @Injectable()
 export class MediaService {
@@ -31,7 +33,11 @@ export class MediaService {
     return media;
   }
 
-  async findAll(options?: { userId?: number; page?: number; limit?: number }) {
+  async findAll(options?: {
+    userId?: number;
+    page?: number;
+    limit?: number;
+  }): Promise<any> {
     const { userId, page, limit } = options || {};
 
     // 如果指定了userId，查询该用户上传的媒体
@@ -90,7 +96,7 @@ export class MediaService {
     // 如果提供了分页参数，返回分页数据
     if (page && limit) {
       const skip = (page - 1) * limit;
-      const [data, total] = await Promise.all([
+      const [rawData, total] = await Promise.all([
         this.prisma.media.findMany({
           where,
           include,
@@ -100,6 +106,11 @@ export class MediaService {
         }),
         this.prisma.media.count({ where }),
       ]);
+
+      // 为没有预览的视频文件生成预览
+      const data = await Promise.all(
+        rawData.map((media) => this.generateVideoPreviewIfNeeded(media)),
+      );
 
       return {
         data,
@@ -113,15 +124,24 @@ export class MediaService {
     }
 
     // 否则返回所有数据（保持向后兼容）
-    return this.prisma.media.findMany({
+    const rawData = await this.prisma.media.findMany({
       where,
       include,
       orderBy: { createdAt: 'desc' },
     });
+
+    // 为没有预览的视频文件生成预览（限制处理数量以避免性能问题）
+    const data = await Promise.all(
+      rawData
+        .slice(0, 50)
+        .map((media) => this.generateVideoPreviewIfNeeded(media)),
+    );
+
+    return data as any;
   }
 
-  async findOne(id: number) {
-    return this.prisma.media.findUnique({
+  async findOne(id: number): Promise<any> {
+    const media = await this.prisma.media.findUnique({
       where: { id },
       include: {
         articles: {
@@ -143,6 +163,12 @@ export class MediaService {
         },
       },
     });
+
+    if (media) {
+      return await this.generateVideoPreviewIfNeeded(media);
+    }
+
+    return media;
   }
 
   async update(id: number, updateMediaDto: UpdateMediaDto) {
@@ -232,6 +258,23 @@ export class MediaService {
     const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
     const fileUrl = `${baseUrl}/uploads/${subDir}/${fileName}`;
 
+    // 生成预览图片base64
+    let previewBase64: string | null = null;
+    try {
+      console.log(
+        `开始生成预览，文件类型: ${fileMimetype}, 文件名: ${file.originalname}`,
+      );
+      previewBase64 = await PreviewGeneratorUtil.generatePreview(
+        file.buffer,
+        fileMimetype,
+        file.originalname,
+      );
+      console.log(`预览生成成功: ${file.originalname}`);
+    } catch (error) {
+      console.error(`生成预览图片失败: ${file.originalname}`, error);
+      // 预览生成失败不影响文件上传，继续执行
+    }
+
     // 创建媒体记录
     const media = await this.prisma.media.create({
       data: {
@@ -239,6 +282,7 @@ export class MediaService {
         url: fileUrl,
         originalName: file.originalname,
         size: file.size,
+        previewBase64,
         uploaderId, // 记录上传者ID
       },
     });
@@ -260,7 +304,58 @@ export class MediaService {
       originalName: file.originalname,
       size: file.size,
       mimetype: file.mimetype,
+      previewBase64: media.previewBase64,
       createdAt: media.createdAt,
     };
+  }
+
+  /**
+   * 为现有视频文件生成预览（如果没有的话）
+   */
+  private async generateVideoPreviewIfNeeded(media: {
+    id: number;
+    type: string;
+    previewBase64: string | null;
+    originalName?: string | null;
+    url: string;
+    [key: string]: any;
+  }): Promise<any> {
+    if (media?.type === 'VIDEO' && !media?.previewBase64) {
+      try {
+        console.log(`为视频文件生成预览: ${media.originalName}`);
+        // 从URL中提取文件路径
+        let filePath: string;
+        try {
+          const url = new URL(media.url);
+          filePath = path.join(process.cwd(), url.pathname);
+        } catch {
+          // 如果不是完整URL，直接处理路径
+          const urlPath = media.url.replace(/^https?:\/\/[^/]+/, '');
+          filePath = path.join(process.cwd(), urlPath);
+        }
+
+        if (fs.existsSync(filePath)) {
+          const buffer = fs.readFileSync(filePath);
+          const previewBase64 = await PreviewGeneratorUtil.generateVideoPreview(
+            buffer,
+            media.originalName || 'video.mp4',
+          );
+
+          // 更新数据库中的预览字段
+          await this.prisma.media.update({
+            where: { id: media.id },
+            data: { previewBase64 },
+          });
+
+          media.previewBase64 = previewBase64;
+          console.log(`视频预览生成成功: ${media.id}`);
+        } else {
+          console.warn(`视频文件不存在，无法生成预览: ${filePath}`);
+        }
+      } catch (error) {
+        console.error(`为视频${media.id}生成预览失败:`, error);
+      }
+    }
+    return media;
   }
 }

@@ -42,4 +42,11 @@ export class CreateMediaDto {
     required: false,
   })
   size?: number;
+
+  @ApiProperty({
+    description: '预览图片的base64字符串',
+    example: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD...',
+    required: false,
+  })
+  previewBase64?: string;
 }
