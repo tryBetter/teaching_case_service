@@ -273,8 +273,36 @@ export class MediaController {
   })
   @ApiResponse({
     status: 200,
-    description:
-      '返回媒体文件列表。包含分页时返回：{data: [], pagination: {}}；不包含分页时返回数组',
+    description: '返回媒体文件列表，包含总数和最大页数信息',
+    schema: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          description: '媒体文件列表',
+        },
+        total: {
+          type: 'number',
+          description: '文件总数',
+          example: 150,
+        },
+        maxPage: {
+          type: 'number',
+          description: '可以查询的最大页码数',
+          example: 15,
+        },
+        pagination: {
+          type: 'object',
+          description: '分页信息（仅在有分页参数时返回）',
+          properties: {
+            page: { type: 'number', example: 1 },
+            limit: { type: 'number', example: 10 },
+            total: { type: 'number', example: 150 },
+            totalPages: { type: 'number', example: 15 },
+          },
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 401,

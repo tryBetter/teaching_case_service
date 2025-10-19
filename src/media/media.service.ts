@@ -112,23 +112,29 @@ export class MediaService {
         rawData.map((media) => this.generateVideoPreviewIfNeeded(media)),
       );
 
+      const totalPages = Math.ceil(total / limit);
       return {
         data,
+        total,
+        maxPage: totalPages,
         pagination: {
           page,
           limit,
           total,
-          totalPages: Math.ceil(total / limit),
+          totalPages,
         },
       };
     }
 
     // 否则返回所有数据（保持向后兼容）
-    const rawData = await this.prisma.media.findMany({
-      where,
-      include,
-      orderBy: { createdAt: 'desc' },
-    });
+    const [rawData, totalCount] = await Promise.all([
+      this.prisma.media.findMany({
+        where,
+        include,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.media.count({ where }),
+    ]);
 
     // 为没有预览的视频文件生成预览（限制处理数量以避免性能问题）
     const data = await Promise.all(
@@ -137,7 +143,11 @@ export class MediaService {
         .map((media) => this.generateVideoPreviewIfNeeded(media)),
     );
 
-    return data as any;
+    return {
+      data,
+      total: totalCount,
+      maxPage: Math.ceil(totalCount / 10), // 默认每页10条
+    };
   }
 
   async findOne(id: number): Promise<any> {
