@@ -90,6 +90,16 @@ export class AuthController {
           description: '用户角色',
         },
         roleId: { type: 'number', example: 5, description: '角色ID' },
+        avatar: {
+          type: 'string',
+          example: 'https://example.com/avatar.jpg',
+          description: '用户头像URL',
+        },
+        major: {
+          type: 'string',
+          example: '计算机科学与技术',
+          description: '用户专业',
+        },
       },
     },
   })

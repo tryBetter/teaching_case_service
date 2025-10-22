@@ -26,6 +26,8 @@ model User {
   password  String
   roleId    Int       // 外键关联到角色表
   status    UserStatus @default(ACTIVE) // 用户状态：ACTIVE-活跃，INACTIVE-禁用
+  avatar    String?   // 用户头像URL
+  major     String?   // 用户专业
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 

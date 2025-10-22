@@ -18,6 +18,20 @@ export class User {
   })
   role: UserRole;
 
+  @ApiProperty({
+    description: '用户头像URL',
+    example: 'https://example.com/avatar.jpg',
+    required: false,
+  })
+  avatar?: string;
+
+  @ApiProperty({
+    description: '用户专业',
+    example: '计算机科学与技术',
+    required: false,
+  })
+  major?: string;
+
   @ApiProperty({ description: '创建时间', example: '2024-01-01T00:00:00.000Z' })
   createdAt: Date;
 

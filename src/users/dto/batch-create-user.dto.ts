@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString, IsOptional, IsInt } from 'class-validator';
+import { IsEmail, IsString, IsOptional, IsInt, IsUrl } from 'class-validator';
 
 export class BatchCreateUserDto {
   @ApiProperty({ description: '用户邮箱', example: 'user@example.com' })
@@ -23,6 +23,24 @@ export class BatchCreateUserDto {
   @IsOptional()
   @IsInt({ message: '角色ID必须是数字' })
   roleId?: number;
+
+  @ApiProperty({
+    description: '用户头像URL',
+    example: 'https://example.com/avatar.jpg',
+    required: false,
+  })
+  @IsOptional()
+  @IsUrl({}, { message: '头像URL格式不正确' })
+  avatar?: string;
+
+  @ApiProperty({
+    description: '用户专业',
+    example: '计算机科学与技术',
+    required: false,
+  })
+  @IsOptional()
+  @IsString({ message: '专业必须是字符串' })
+  major?: string;
 }
 
 export class BatchCreateUserResult {

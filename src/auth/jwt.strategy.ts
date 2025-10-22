@@ -27,6 +27,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         email: true,
         name: true,
         roleId: true,
+        avatar: true,
+        major: true,
         role: {
           select: {
             name: true,
@@ -39,12 +41,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       return null;
     }
 
+    const roleName = user.role
+      ? String((user.role as { name: string }).name)
+      : '学生';
+
     return {
       id: user.id,
       email: user.email,
       name: user.name,
-      role: normalizeRoleName(user.role.name), // 转换为枚举值
+      role: normalizeRoleName(roleName),
       roleId: user.roleId,
+      avatar: user.avatar as string | null,
+      major: user.major as string | null,
       userId: user.id, // 保持向后兼容
     };
   }

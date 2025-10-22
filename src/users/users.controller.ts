@@ -69,6 +69,16 @@ export class UsersController {
         },
         name: { type: 'string', example: '张老师', description: '用户姓名' },
         roleId: { type: 'number', example: 4, description: '角色ID' },
+        avatar: {
+          type: 'string',
+          example: 'https://example.com/avatar.jpg',
+          description: '用户头像URL',
+        },
+        major: {
+          type: 'string',
+          example: '计算机科学与技术',
+          description: '用户专业',
+        },
         status: {
           type: 'string',
           example: 'ACTIVE',

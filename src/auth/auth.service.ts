@@ -21,6 +21,8 @@ export class AuthService {
     name: string | null;
     role: string;
     roleId: number;
+    avatar: string | null;
+    major: string | null;
   } | null> {
     const user = await this.prisma.user.findUnique({
       where: { email },
@@ -62,6 +64,8 @@ export class AuthService {
         name: user.name,
         role: user.role,
         roleId: user.roleId,
+        avatar: user.avatar,
+        major: user.major,
         userId: user.id, // 保持向后兼容
       },
     };
@@ -70,12 +74,7 @@ export class AuthService {
   async getCurrentUser(userId: number) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        roleId: true,
-        status: true,
+      include: {
         role: {
           select: {
             id: true,
@@ -93,9 +92,11 @@ export class AuthService {
       id: user.id,
       email: user.email,
       name: user.name,
-      role: normalizeRoleName(user.role.name),
+      role: user.role ? normalizeRoleName(user.role.name) : 'STUDENT',
       roleId: user.roleId,
       status: user.status,
+      avatar: user.avatar as string | null,
+      major: user.major as string | null,
       userId: user.id, // 保持向后兼容
     };
   }

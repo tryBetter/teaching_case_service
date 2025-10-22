@@ -15,3 +15,6 @@
 检查端口占用：netstat -ano | findstr :3000
 终止进程：taskkill /PID [进程ID] /F
 或者直接重启开发服务器：npm run start:dev
+
+// 更新数据库
+npx prisma migrate dev --name add_user_avatar_major

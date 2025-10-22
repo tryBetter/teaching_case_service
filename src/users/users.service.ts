@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {
@@ -48,6 +44,8 @@ export class UsersService {
         name: createUserDto.name,
         password: hashedPassword,
         roleId,
+        avatar: createUserDto.avatar || null,
+        major: createUserDto.major || null,
       },
       include: {
         role: true,
@@ -55,7 +53,11 @@ export class UsersService {
     });
 
     // 如果创建的是教师，自动关联所有助教组长
-    if (normalizeRoleName(user.role.name) === UserRole.TEACHER) {
+    if (
+      user.role &&
+      normalizeRoleName(String((user.role as { name: string }).name)) ===
+        UserRole.TEACHER
+    ) {
       await this.associateTeacherWithAssistantLeaders(user.id);
     }
 
@@ -337,6 +339,8 @@ export class UsersService {
             name: user.name,
             password: hashedPassword,
             roleId,
+            avatar: user.avatar || null,
+            major: user.major || null,
           },
           include: {
             role: true,

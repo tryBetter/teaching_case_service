@@ -34,16 +34,17 @@ export class ExcelService {
 
       // 获取标题行
       const headers = jsonData[0] as string[];
-      const expectedHeaders = ['邮箱', '姓名', '密码', '角色'];
+      const requiredHeaders = ['邮箱', '姓名', '密码', '角色'];
+      const optionalHeaders = ['头像', '专业'];
 
-      // 验证标题行
-      const isValidHeaders = expectedHeaders.every((header) =>
+      // 验证必需标题行
+      const isValidHeaders = requiredHeaders.every((header) =>
         headers.some((h) => h && h.toString().trim() === header),
       );
 
       if (!isValidHeaders) {
         throw new BadRequestException(
-          `Excel文件标题行必须包含: ${expectedHeaders.join(', ')}`,
+          `Excel文件标题行必须包含: ${requiredHeaders.join(', ')}`,
         );
       }
 
@@ -59,6 +60,12 @@ export class ExcelService {
       );
       const roleIndex = headers.findIndex(
         (h) => h && h.toString().trim() === '角色',
+      );
+      const avatarIndex = headers.findIndex(
+        (h) => h && h.toString().trim() === '头像',
+      );
+      const majorIndex = headers.findIndex(
+        (h) => h && h.toString().trim() === '专业',
       );
 
       // 解析数据行
@@ -76,6 +83,10 @@ export class ExcelService {
         const name = row[nameIndex]?.toString().trim();
         const password = row[passwordIndex]?.toString().trim();
         const roleStr = row[roleIndex]?.toString().trim();
+        const avatar =
+          avatarIndex >= 0 ? row[avatarIndex]?.toString().trim() : undefined;
+        const major =
+          majorIndex >= 0 ? row[majorIndex]?.toString().trim() : undefined;
 
         // 验证必填字段
         if (!email) {
@@ -128,6 +139,8 @@ export class ExcelService {
           name: name || undefined,
           password,
           roleId,
+          avatar: avatar || undefined,
+          major: major || undefined,
         });
       }
 
