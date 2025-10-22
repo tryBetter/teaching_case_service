@@ -44,12 +44,8 @@ export class ArticlesService {
       include: {
         category: true,
         filterConditions: {
-          include: {
-            filterCondition: {
-              include: {
-                type: true,
-              },
-            },
+          select: {
+            id: true,
           },
         },
         author: {
@@ -389,12 +385,8 @@ export class ArticlesService {
       include: {
         category: true,
         filterConditions: {
-          include: {
-            filterCondition: {
-              include: {
-                type: true,
-              },
-            },
+          select: {
+            id: true,
           },
         },
         author: {
