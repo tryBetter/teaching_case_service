@@ -203,6 +203,13 @@ export class ArticlesController {
     type: Boolean,
   })
   @ApiQuery({
+    name: 'filterConditionIds',
+    description: '筛选条件ID列表，用逗号分隔，例如：1,2,3',
+    required: false,
+    type: String,
+    example: '1,2,3',
+  })
+  @ApiQuery({
     name: 'orderBy',
     description:
       '排序方式：createdAt_desc(创建时间倒序)、createdAt_asc(创建时间正序)、updatedAt_desc(更新时间倒序)、updatedAt_asc(更新时间正序)',
@@ -248,6 +255,7 @@ export class ArticlesController {
     @Query('categoryId') categoryId?: string,
     @Query('published') published?: string,
     @Query('featured') featured?: string,
+    @Query('filterConditionIds') filterConditionIds?: string,
     @Query('orderBy') orderBy: string = 'createdAt_desc',
   ): Promise<{
     data: any[];
@@ -256,6 +264,14 @@ export class ArticlesController {
     limit: number;
     totalPages: number;
   }> {
+    // 解析筛选条件ID列表
+    const filterConditionIdsArray = filterConditionIds
+      ? filterConditionIds
+          .split(',')
+          .map((id) => parseInt(id.trim()))
+          .filter((id) => !isNaN(id))
+      : undefined;
+
     return await this.articlesService.findAllWithPagination({
       page: parseInt(page) || 1,
       limit: Math.min(parseInt(limit) || 10, 100), // 最大100条
@@ -266,6 +282,7 @@ export class ArticlesController {
         published === 'true' ? true : published === 'false' ? false : undefined,
       featured:
         featured === 'true' ? true : featured === 'false' ? false : undefined,
+      filterConditionIds: filterConditionIdsArray,
       orderBy,
     });
   }

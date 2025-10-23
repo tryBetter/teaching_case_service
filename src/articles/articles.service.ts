@@ -116,6 +116,7 @@ export class ArticlesService {
     categoryId?: number;
     published?: boolean;
     featured?: boolean;
+    filterConditionIds?: number[];
     orderBy?: string;
   }): Promise<{
     data: any[];
@@ -132,6 +133,7 @@ export class ArticlesService {
       categoryId,
       published,
       featured,
+      filterConditionIds,
       orderBy,
     } = params;
 
@@ -167,6 +169,17 @@ export class ArticlesService {
     // 按推荐状态筛选
     if (featured !== undefined) {
       where.featured = featured;
+    }
+
+    // 按筛选条件ID筛选
+    if (filterConditionIds && filterConditionIds.length > 0) {
+      where.filterConditions = {
+        some: {
+          filterConditionId: {
+            in: filterConditionIds,
+          },
+        },
+      };
     }
 
     // 构建排序规则

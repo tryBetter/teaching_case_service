@@ -17,4 +17,5 @@
 或者直接重启开发服务器：npm run start:dev
 
 // 更新数据库
+npx prisma generate
 npx prisma migrate dev --name add_user_avatar_major
