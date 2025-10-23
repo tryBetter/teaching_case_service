@@ -3,6 +3,20 @@ let authToken = localStorage.getItem('adminToken');
 let currentUser = null;
 const API_BASE_URL = window.location.origin;
 
+// 分页相关全局变量
+let currentMediaPage = 1;
+let currentMediaPageSize = 10;
+let currentMediaSearch = '';
+let currentMediaType = '';
+
+let currentCommentsPage = 1;
+let currentCommentsPageSize = 10;
+let currentCommentsSearch = '';
+
+let currentNotesPage = 1;
+let currentNotesPageSize = 10;
+let currentNotesSearch = '';
+
 // 初始化
 document.addEventListener('DOMContentLoaded', function () {
   console.log('页面加载完成，开始检查认证状态');
@@ -203,13 +217,22 @@ function showSection(sectionName) {
       loadCategories();
       break;
     case 'media':
-      loadMedia();
+      loadMedia(
+        currentMediaPage,
+        currentMediaPageSize,
+        currentMediaSearch,
+        currentMediaType,
+      );
       break;
     case 'comments':
-      loadComments();
+      loadComments(
+        currentCommentsPage,
+        currentCommentsPageSize,
+        currentCommentsSearch,
+      );
       break;
     case 'notes':
-      loadNotes();
+      loadNotes(currentNotesPage, currentNotesPageSize, currentNotesSearch);
       break;
     case 'favorites':
       loadFavorites();
@@ -1052,9 +1075,22 @@ async function loadCategories() {
 }
 
 // 加载媒体列表
-async function loadMedia() {
+async function loadMedia(page = 1, pageSize = 10, search = '', type = '') {
   try {
-    const response = await fetch(`${API_BASE_URL}/media?page=1&limit=100`, {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: pageSize.toString(),
+    });
+
+    if (search) {
+      params.append('search', search);
+    }
+
+    if (type) {
+      params.append('type', type);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/media?${params}`, {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -1104,9 +1140,16 @@ async function loadMedia() {
                 `;
           })
           .join('');
+
+        // 更新分页信息
+        updateMediaPagination(data);
       } else {
         tbody.innerHTML =
           '<tr><td colspan="7" class="text-center text-muted">暂无数据</td></tr>';
+        // 清空分页信息
+        document.getElementById('mediaPaginationInfo').textContent =
+          '显示第 0 条，共 0 条';
+        document.getElementById('mediaPagination').innerHTML = '';
       }
     }
   } catch (error) {
@@ -1117,9 +1160,18 @@ async function loadMedia() {
 }
 
 // 加载评论列表
-async function loadComments() {
+async function loadComments(page = 1, pageSize = 10, search = '') {
   try {
-    const response = await fetch(`${API_BASE_URL}/comment?page=1&limit=100`, {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: pageSize.toString(),
+    });
+
+    if (search) {
+      params.append('search', search);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/comment?${params}`, {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -1158,9 +1210,16 @@ async function loadComments() {
                 `;
           })
           .join('');
+
+        // 更新分页信息
+        updateCommentsPagination(data);
       } else {
         tbody.innerHTML =
           '<tr><td colspan="6" class="text-center text-muted">暂无数据</td></tr>';
+        // 清空分页信息
+        document.getElementById('commentsPaginationInfo').textContent =
+          '显示第 0 条，共 0 条';
+        document.getElementById('commentsPagination').innerHTML = '';
       }
     }
   } catch (error) {
@@ -1171,9 +1230,18 @@ async function loadComments() {
 }
 
 // 加载笔记列表
-async function loadNotes() {
+async function loadNotes(page = 1, pageSize = 10, search = '') {
   try {
-    const response = await fetch(`${API_BASE_URL}/note?page=1&limit=100`, {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: pageSize.toString(),
+    });
+
+    if (search) {
+      params.append('search', search);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/note?${params}`, {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -1212,9 +1280,16 @@ async function loadNotes() {
                 `;
           })
           .join('');
+
+        // 更新分页信息
+        updateNotesPagination(data);
       } else {
         tbody.innerHTML =
           '<tr><td colspan="6" class="text-center text-muted">暂无数据</td></tr>';
+        // 清空分页信息
+        document.getElementById('notesPaginationInfo').textContent =
+          '显示第 0 条，共 0 条';
+        document.getElementById('notesPagination').innerHTML = '';
       }
     }
   } catch (error) {
@@ -2797,4 +2872,266 @@ function resetHotSearchFilter() {
   document.getElementById('hotSearchKeyword').value = '';
   document.getElementById('hotSearchStatus').value = '';
   renderHotSearchTable(hotSearchData);
+}
+
+// ==================== 媒体管理分页功能 ====================
+
+// 更新媒体分页信息
+function updateMediaPagination(data) {
+  // 媒体API返回的数据结构：{ data, total, maxPage, pagination: { page, limit, total, totalPages } }
+  const pagination = data.pagination || {};
+  const { page = 1, limit = 10, total = 0, totalPages = 0 } = pagination;
+
+  const startItem = (page - 1) * limit + 1;
+  const endItem = Math.min(page * limit, total);
+
+  document.getElementById('mediaPaginationInfo').textContent =
+    `显示第 ${startItem}-${endItem} 条，共 ${total} 条`;
+
+  // 生成分页按钮
+  const paginationElement = document.getElementById('mediaPagination');
+  paginationElement.innerHTML = '';
+
+  // 上一页按钮
+  const prevButton = document.createElement('li');
+  prevButton.className = `page-item ${page === 1 ? 'disabled' : ''}`;
+  prevButton.innerHTML = `<a class="page-link" href="#" onclick="changeMediaPage(${page - 1})">上一页</a>`;
+  paginationElement.appendChild(prevButton);
+
+  // 页码按钮
+  const startPage = Math.max(1, page - 2);
+  const endPage = Math.min(totalPages, page + 2);
+
+  for (let i = startPage; i <= endPage; i++) {
+    const pageButton = document.createElement('li');
+    pageButton.className = `page-item ${i === page ? 'active' : ''}`;
+    pageButton.innerHTML = `<a class="page-link" href="#" onclick="changeMediaPage(${i})">${i}</a>`;
+    paginationElement.appendChild(pageButton);
+  }
+
+  // 下一页按钮
+  const nextButton = document.createElement('li');
+  nextButton.className = `page-item ${page === totalPages ? 'disabled' : ''}`;
+  nextButton.innerHTML = `<a class="page-link" href="#" onclick="changeMediaPage(${page + 1})">下一页</a>`;
+  paginationElement.appendChild(nextButton);
+}
+
+// 搜索媒体
+function searchMedia() {
+  const searchInput = document.getElementById('mediaSearchInput');
+  const searchTerm = searchInput.value.trim();
+  currentMediaSearch = searchTerm;
+  currentMediaPage = 1;
+  loadMedia(
+    currentMediaPage,
+    currentMediaPageSize,
+    currentMediaSearch,
+    currentMediaType,
+  );
+}
+
+// 筛选媒体
+function filterMedia() {
+  const typeFilter = document.getElementById('mediaTypeFilter');
+  const selectedType = typeFilter.value;
+  currentMediaType = selectedType;
+  currentMediaPage = 1;
+  loadMedia(
+    currentMediaPage,
+    currentMediaPageSize,
+    currentMediaSearch,
+    currentMediaType,
+  );
+}
+
+// 改变每页显示数量
+function changeMediaPageSize() {
+  const pageSizeSelect = document.getElementById('mediaPageSize');
+  const newPageSize = parseInt(pageSizeSelect.value);
+  currentMediaPageSize = newPageSize;
+  currentMediaPage = 1;
+  loadMedia(
+    currentMediaPage,
+    currentMediaPageSize,
+    currentMediaSearch,
+    currentMediaType,
+  );
+}
+
+// 切换媒体页面
+function changeMediaPage(page) {
+  if (page < 1) return;
+  currentMediaPage = page;
+  loadMedia(
+    currentMediaPage,
+    currentMediaPageSize,
+    currentMediaSearch,
+    currentMediaType,
+  );
+}
+
+// ==================== 评论管理分页功能 ====================
+
+// 更新评论分页信息
+function updateCommentsPagination(data) {
+  // 评论API返回的数据结构：{ data, pagination: { page, limit, total, totalPages } }
+  const pagination = data.pagination || {};
+  const { page = 1, limit = 10, total = 0, totalPages = 0 } = pagination;
+
+  const startItem = (page - 1) * limit + 1;
+  const endItem = Math.min(page * limit, total);
+
+  document.getElementById('commentsPaginationInfo').textContent =
+    `显示第 ${startItem}-${endItem} 条，共 ${total} 条`;
+
+  // 生成分页按钮
+  const paginationElement = document.getElementById('commentsPagination');
+  paginationElement.innerHTML = '';
+
+  // 上一页按钮
+  const prevButton = document.createElement('li');
+  prevButton.className = `page-item ${page === 1 ? 'disabled' : ''}`;
+  prevButton.innerHTML = `<a class="page-link" href="#" onclick="changeCommentsPage(${page - 1})">上一页</a>`;
+  paginationElement.appendChild(prevButton);
+
+  // 页码按钮
+  const startPage = Math.max(1, page - 2);
+  const endPage = Math.min(totalPages, page + 2);
+
+  for (let i = startPage; i <= endPage; i++) {
+    const pageButton = document.createElement('li');
+    pageButton.className = `page-item ${i === page ? 'active' : ''}`;
+    pageButton.innerHTML = `<a class="page-link" href="#" onclick="changeCommentsPage(${i})">${i}</a>`;
+    paginationElement.appendChild(pageButton);
+  }
+
+  // 下一页按钮
+  const nextButton = document.createElement('li');
+  nextButton.className = `page-item ${page === totalPages ? 'disabled' : ''}`;
+  nextButton.innerHTML = `<a class="page-link" href="#" onclick="changeCommentsPage(${page + 1})">下一页</a>`;
+  paginationElement.appendChild(nextButton);
+}
+
+// 搜索评论
+function searchComments() {
+  const searchInput = document.getElementById('commentsSearchInput');
+  const searchTerm = searchInput.value.trim();
+  currentCommentsSearch = searchTerm;
+  currentCommentsPage = 1;
+  loadComments(
+    currentCommentsPage,
+    currentCommentsPageSize,
+    currentCommentsSearch,
+  );
+}
+
+// 改变每页显示数量
+function changeCommentsPageSize() {
+  const pageSizeSelect = document.getElementById('commentsPageSize');
+  const newPageSize = parseInt(pageSizeSelect.value);
+  currentCommentsPageSize = newPageSize;
+  currentCommentsPage = 1;
+  loadComments(
+    currentCommentsPage,
+    currentCommentsPageSize,
+    currentCommentsSearch,
+  );
+}
+
+// 切换评论页面
+function changeCommentsPage(page) {
+  if (page < 1) return;
+  currentCommentsPage = page;
+  loadComments(
+    currentCommentsPage,
+    currentCommentsPageSize,
+    currentCommentsSearch,
+  );
+}
+
+// 重置评论筛选
+function resetCommentsFilter() {
+  document.getElementById('commentsSearchInput').value = '';
+  currentCommentsSearch = '';
+  currentCommentsPage = 1;
+  loadComments(
+    currentCommentsPage,
+    currentCommentsPageSize,
+    currentCommentsSearch,
+  );
+}
+
+// ==================== 笔记管理分页功能 ====================
+
+// 更新笔记分页信息
+function updateNotesPagination(data) {
+  // 笔记API返回的数据结构：{ data, pagination: { page, limit, total, totalPages } }
+  const pagination = data.pagination || {};
+  const { page = 1, limit = 10, total = 0, totalPages = 0 } = pagination;
+
+  const startItem = (page - 1) * limit + 1;
+  const endItem = Math.min(page * limit, total);
+
+  document.getElementById('notesPaginationInfo').textContent =
+    `显示第 ${startItem}-${endItem} 条，共 ${total} 条`;
+
+  // 生成分页按钮
+  const paginationElement = document.getElementById('notesPagination');
+  paginationElement.innerHTML = '';
+
+  // 上一页按钮
+  const prevButton = document.createElement('li');
+  prevButton.className = `page-item ${page === 1 ? 'disabled' : ''}`;
+  prevButton.innerHTML = `<a class="page-link" href="#" onclick="changeNotesPage(${page - 1})">上一页</a>`;
+  paginationElement.appendChild(prevButton);
+
+  // 页码按钮
+  const startPage = Math.max(1, page - 2);
+  const endPage = Math.min(totalPages, page + 2);
+
+  for (let i = startPage; i <= endPage; i++) {
+    const pageButton = document.createElement('li');
+    pageButton.className = `page-item ${i === page ? 'active' : ''}`;
+    pageButton.innerHTML = `<a class="page-link" href="#" onclick="changeNotesPage(${i})">${i}</a>`;
+    paginationElement.appendChild(pageButton);
+  }
+
+  // 下一页按钮
+  const nextButton = document.createElement('li');
+  nextButton.className = `page-item ${page === totalPages ? 'disabled' : ''}`;
+  nextButton.innerHTML = `<a class="page-link" href="#" onclick="changeNotesPage(${page + 1})">下一页</a>`;
+  paginationElement.appendChild(nextButton);
+}
+
+// 搜索笔记
+function searchNotes() {
+  const searchInput = document.getElementById('notesSearchInput');
+  const searchTerm = searchInput.value.trim();
+  currentNotesSearch = searchTerm;
+  currentNotesPage = 1;
+  loadNotes(currentNotesPage, currentNotesPageSize, currentNotesSearch);
+}
+
+// 改变每页显示数量
+function changeNotesPageSize() {
+  const pageSizeSelect = document.getElementById('notesPageSize');
+  const newPageSize = parseInt(pageSizeSelect.value);
+  currentNotesPageSize = newPageSize;
+  currentNotesPage = 1;
+  loadNotes(currentNotesPage, currentNotesPageSize, currentNotesSearch);
+}
+
+// 切换笔记页面
+function changeNotesPage(page) {
+  if (page < 1) return;
+  currentNotesPage = page;
+  loadNotes(currentNotesPage, currentNotesPageSize, currentNotesSearch);
+}
+
+// 重置笔记筛选
+function resetNotesFilter() {
+  document.getElementById('notesSearchInput').value = '';
+  currentNotesSearch = '';
+  currentNotesPage = 1;
+  loadNotes(currentNotesPage, currentNotesPageSize, currentNotesSearch);
 }
