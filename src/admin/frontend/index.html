@@ -436,7 +436,7 @@
                     <thead>
                       <tr>
                         <th>ID</th>
-                        <th>姓名</th>
+                        <th>用户信息</th>
                         <th>邮箱</th>
                         <th>角色</th>
                         <th>状态</th>
@@ -1300,6 +1300,30 @@
                 </select>
                 <div class="invalid-feedback"></div>
               </div>
+              <div class="mb-3">
+                <label for="createUserAvatar" class="form-label">头像</label>
+                <input
+                  type="url"
+                  class="form-control"
+                  id="createUserAvatar"
+                  placeholder="请输入头像URL"
+                />
+                <div class="invalid-feedback"></div>
+                <div class="form-text">请输入有效的头像图片URL</div>
+              </div>
+              <div class="mb-3">
+                <label for="createUserProfession" class="form-label"
+                  >专业</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="createUserProfession"
+                  placeholder="请输入专业名称"
+                />
+                <div class="invalid-feedback"></div>
+                <div class="form-text">例如：计算机科学、软件工程等</div>
+              </div>
             </form>
           </div>
           <div class="modal-footer">
@@ -1380,6 +1404,28 @@
                   <!-- 角色选项将通过JavaScript动态加载 -->
                 </select>
                 <div class="invalid-feedback"></div>
+              </div>
+              <div class="mb-3">
+                <label for="editUserAvatar" class="form-label">头像</label>
+                <input
+                  type="url"
+                  class="form-control"
+                  id="editUserAvatar"
+                  placeholder="请输入头像URL"
+                />
+                <div class="invalid-feedback"></div>
+                <div class="form-text">请输入有效的头像图片URL</div>
+              </div>
+              <div class="mb-3">
+                <label for="editUserProfession" class="form-label">专业</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="editUserProfession"
+                  placeholder="请输入专业名称"
+                />
+                <div class="invalid-feedback"></div>
+                <div class="form-text">例如：计算机科学、软件工程等</div>
               </div>
             </form>
           </div>
@@ -1675,10 +1721,21 @@
                 <h6>步骤说明：</h6>
                 <ol>
                   <li>点击"下载模板"按钮下载Excel模板</li>
-                  <li>在模板中填写用户信息</li>
+                  <li>在模板中填写用户信息（包括头像URL和专业）</li>
                   <li>选择填写好的Excel文件</li>
                   <li>点击"开始导入"按钮</li>
                 </ol>
+                <div class="alert alert-info">
+                  <h6>字段说明：</h6>
+                  <ul class="mb-0">
+                    <li><strong>邮箱</strong>：必填，用户登录邮箱</li>
+                    <li><strong>姓名</strong>：可选，用户显示名称</li>
+                    <li><strong>密码</strong>：必填，初始登录密码</li>
+                    <li><strong>角色ID</strong>：必填，用户角色ID</li>
+                    <li><strong>头像URL</strong>：可选，用户头像图片链接</li>
+                    <li><strong>专业</strong>：可选，用户专业信息</li>
+                  </ul>
+                </div>
                 <div class="mt-3">
                   <button
                     type="button"

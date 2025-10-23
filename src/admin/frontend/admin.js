@@ -380,10 +380,23 @@ async function loadUsers(page = 1, pageSize = 10, search = '', role = '') {
               ? user.role.name || '未知角色'
               : '未知角色';
 
+            // 处理头像显示
+            const avatarHtml = user.avatar
+              ? `<img src="${user.avatar}" alt="头像" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22><rect width=%2232%22 height=%2232%22 fill=%22%23ddd%22/><text x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-size=%2212%22>头像</text></svg>'">`
+              : '<div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i class="bi bi-person text-white"></i></div>';
+
             return `
                     <tr>
                         <td>${user.id}</td>
-                        <td>${user.name || '未设置'}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                ${avatarHtml}
+                                <div class="ms-2">
+                                    <div class="fw-bold">${user.name || '未设置'}</div>
+                                    ${user.major ? `<small class="text-muted">${user.major}</small>` : ''}
+                                </div>
+                            </div>
+                        </td>
                         <td>${user.email || '未设置'}</td>
                         <td><span class="badge bg-primary">${roleName}</span></td>
                         <td>
@@ -1795,6 +1808,8 @@ function editUser(userId) {
       document.getElementById('editUserEmail').value = user.email;
       document.getElementById('editUserName').value = user.name || '';
       document.getElementById('editUserPassword').value = '';
+      document.getElementById('editUserAvatar').value = user.avatar || '';
+      document.getElementById('editUserProfession').value = user.major || '';
 
       // 加载角色选项并设置当前角色
       loadRoleOptions('editUserRole', user.role.id);
@@ -2160,12 +2175,24 @@ function showFieldError(fieldId, message) {
   }
 }
 
+// 验证URL格式
+function isValidUrl(string) {
+  try {
+    new URL(string);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
 // 提交创建用户表单
 async function submitCreateUser() {
   const email = document.getElementById('createUserEmail').value.trim();
   const name = document.getElementById('createUserName').value.trim();
   const password = document.getElementById('createUserPassword').value;
   const roleId = document.getElementById('createUserRole').value;
+  const avatar = document.getElementById('createUserAvatar').value.trim();
+  const major = document.getElementById('createUserProfession').value.trim();
 
   // 清空之前的验证状态
   clearFormValidation('createUserForm');
@@ -2188,6 +2215,12 @@ async function submitCreateUser() {
     hasError = true;
   }
 
+  // 验证头像URL格式（如果提供）
+  if (avatar && !isValidUrl(avatar)) {
+    showFieldError('createUserAvatar', '请输入有效的头像URL');
+    hasError = true;
+  }
+
   if (hasError) {
     return;
   }
@@ -2204,6 +2237,8 @@ async function submitCreateUser() {
         name: name || undefined,
         password,
         roleId: parseInt(roleId),
+        avatar: avatar || undefined,
+        major: major || undefined,
       }),
     });
 
@@ -2238,6 +2273,8 @@ async function submitEditUser() {
   const name = document.getElementById('editUserName').value.trim();
   const password = document.getElementById('editUserPassword').value;
   const roleId = document.getElementById('editUserRole').value;
+  const avatar = document.getElementById('editUserAvatar').value.trim();
+  const major = document.getElementById('editUserProfession').value.trim();
 
   // 清空之前的验证状态
   clearFormValidation('editUserForm');
@@ -2255,6 +2292,12 @@ async function submitEditUser() {
     hasError = true;
   }
 
+  // 验证头像URL格式（如果提供）
+  if (avatar && !isValidUrl(avatar)) {
+    showFieldError('editUserAvatar', '请输入有效的头像URL');
+    hasError = true;
+  }
+
   if (hasError) {
     return;
   }
@@ -2264,6 +2307,8 @@ async function submitEditUser() {
       email,
       name: name || undefined,
       roleId: parseInt(roleId),
+      avatar: avatar || undefined,
+      major: major || undefined,
     };
 
     // 只有在密码不为空时才更新密码

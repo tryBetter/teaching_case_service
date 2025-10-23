@@ -165,7 +165,7 @@ export class ExcelService {
    * @returns Excel文件的Buffer
    */
   async generateUserTemplate(): Promise<Buffer> {
-    const headers = ['邮箱', '姓名', '密码', '角色'];
+    const headers = ['邮箱', '姓名', '密码', '角色', '头像', '专业'];
 
     // 从数据库获取所有角色（排除超级管理员）
     const roles = await this.prisma.role.findMany({
@@ -190,22 +190,73 @@ export class ExcelService {
       学生: '同学',
     };
 
+    // 示例头像URL模板
+    const avatarTemplates = [
+      'https://example.com/avatar1.jpg',
+      'https://example.com/avatar2.jpg',
+      'https://example.com/avatar3.jpg',
+      'https://example.com/avatar4.jpg',
+      'https://example.com/avatar5.jpg',
+      'https://example.com/avatar6.jpg',
+    ];
+
+    // 示例专业模板
+    const professionTemplates = [
+      '计算机科学',
+      '软件工程',
+      '数据科学',
+      '人工智能',
+      '网络安全',
+      '信息系统',
+    ];
+
     roles.forEach((role, index) => {
       const namePrefix = nameTemplates[index % nameTemplates.length];
       const nameSuffix = nameTypes[role.name] ?? '用户';
       const sampleName = `${namePrefix}${nameSuffix}`;
       const sampleEmail = `${role.name.toLowerCase().replace(/[^a-z]/g, '')}${index + 1}@example.com`;
       const samplePassword = `password${index + 1}23`;
+      const sampleAvatar = avatarTemplates[index % avatarTemplates.length];
+      const sampleProfession =
+        professionTemplates[index % professionTemplates.length];
 
-      sampleData.push([sampleEmail, sampleName, samplePassword, role.name]);
+      sampleData.push([
+        sampleEmail,
+        sampleName,
+        samplePassword,
+        role.name,
+        sampleAvatar,
+        sampleProfession,
+      ]);
     });
 
     // 如果没有角色数据，使用默认示例
     if (sampleData.length === 0) {
       sampleData.push(
-        ['admin@example.com', '张管理员', 'password123', '管理员'],
-        ['teacher@example.com', '李老师', 'password223', '教师'],
-        ['student@example.com', '王同学', 'password323', '学生'],
+        [
+          'admin@example.com',
+          '张管理员',
+          'password123',
+          '管理员',
+          'https://example.com/admin.jpg',
+          '计算机科学',
+        ],
+        [
+          'teacher@example.com',
+          '李老师',
+          'password223',
+          '教师',
+          'https://example.com/teacher.jpg',
+          '软件工程',
+        ],
+        [
+          'student@example.com',
+          '王同学',
+          'password323',
+          '学生',
+          'https://example.com/student.jpg',
+          '数据科学',
+        ],
       );
     }
 
@@ -221,6 +272,8 @@ export class ExcelService {
       { wch: 15 }, // 姓名
       { wch: 20 }, // 密码
       { wch: 15 }, // 角色（加宽以容纳"教师组长"等长角色名）
+      { wch: 40 }, // 头像（加宽以容纳URL）
+      { wch: 20 }, // 专业
     ];
     worksheet['!cols'] = colWidths;
 
