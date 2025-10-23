@@ -986,6 +986,45 @@
               <h1 class="h2">收藏管理</h1>
             </div>
 
+            <!-- 搜索和筛选 -->
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <div class="input-group">
+                  <span class="input-group-text">
+                    <i class="bi bi-search"></i>
+                  </span>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="favoritesSearchInput"
+                    placeholder="搜索用户或文章..."
+                    onkeyup="searchFavorites()"
+                  />
+                </div>
+              </div>
+              <div class="col-md-3">
+                <select
+                  class="form-select"
+                  id="favoritesPageSize"
+                  onchange="changeFavoritesPageSize()"
+                >
+                  <option value="10">每页10条</option>
+                  <option value="20">每页20条</option>
+                  <option value="50">每页50条</option>
+                  <option value="100">每页100条</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <button
+                  class="btn btn-outline-secondary"
+                  onclick="resetFavoritesFilter()"
+                >
+                  <i class="bi bi-arrow-clockwise"></i>
+                  重置筛选
+                </button>
+              </div>
+            </div>
+
             <div class="card">
               <div class="card-body">
                 <div class="table-responsive">
@@ -1009,6 +1048,20 @@
                       </tr>
                     </tbody>
                   </table>
+                </div>
+
+                <!-- 分页组件 -->
+                <div
+                  class="d-flex justify-content-between align-items-center mt-3"
+                >
+                  <div id="favoritesPaginationInfo" class="text-muted">
+                    显示第 1-10 条，共 0 条
+                  </div>
+                  <nav>
+                    <ul id="favoritesPagination" class="pagination mb-0">
+                      <!-- 分页按钮将通过JavaScript动态生成 -->
+                    </ul>
+                  </nav>
                 </div>
               </div>
             </div>

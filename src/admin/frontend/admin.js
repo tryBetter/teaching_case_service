@@ -17,6 +17,10 @@ let currentNotesPage = 1;
 let currentNotesPageSize = 10;
 let currentNotesSearch = '';
 
+let currentFavoritesPage = 1;
+let currentFavoritesPageSize = 10;
+let currentFavoritesSearch = '';
+
 // 初始化
 document.addEventListener('DOMContentLoaded', function () {
   console.log('页面加载完成，开始检查认证状态');
@@ -235,7 +239,11 @@ function showSection(sectionName) {
       loadNotes(currentNotesPage, currentNotesPageSize, currentNotesSearch);
       break;
     case 'favorites':
-      loadFavorites();
+      loadFavorites(
+        currentFavoritesPage,
+        currentFavoritesPageSize,
+        currentFavoritesSearch,
+      );
       break;
     case 'roles':
       loadRoles();
@@ -1300,9 +1308,18 @@ async function loadNotes(page = 1, pageSize = 10, search = '') {
 }
 
 // 加载收藏列表
-async function loadFavorites() {
+async function loadFavorites(page = 1, pageSize = 10, search = '') {
   try {
-    const response = await fetch(`${API_BASE_URL}/favorite?page=1&limit=100`, {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: pageSize.toString(),
+    });
+
+    if (search) {
+      params.append('search', search);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/favorite?${params}`, {
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
@@ -1343,9 +1360,16 @@ async function loadFavorites() {
                 `;
           })
           .join('');
+
+        // 更新分页信息
+        updateFavoritesPagination(data);
       } else {
         tbody.innerHTML =
           '<tr><td colspan="5" class="text-center text-muted">暂无数据</td></tr>';
+        // 清空分页信息
+        document.getElementById('favoritesPaginationInfo').textContent =
+          '显示第 0 条，共 0 条';
+        document.getElementById('favoritesPagination').innerHTML = '';
       }
     }
   } catch (error) {
@@ -3134,4 +3158,95 @@ function resetNotesFilter() {
   currentNotesSearch = '';
   currentNotesPage = 1;
   loadNotes(currentNotesPage, currentNotesPageSize, currentNotesSearch);
+}
+
+// ==================== 收藏管理分页功能 ====================
+
+// 更新收藏分页信息
+function updateFavoritesPagination(data) {
+  // 收藏API返回的数据结构：{ data, pagination: { page, limit, total, totalPages } }
+  const pagination = data.pagination || {};
+  const { page = 1, limit = 10, total = 0, totalPages = 0 } = pagination;
+
+  const startItem = (page - 1) * limit + 1;
+  const endItem = Math.min(page * limit, total);
+
+  document.getElementById('favoritesPaginationInfo').textContent =
+    `显示第 ${startItem}-${endItem} 条，共 ${total} 条`;
+
+  // 生成分页按钮
+  const paginationElement = document.getElementById('favoritesPagination');
+  paginationElement.innerHTML = '';
+
+  // 上一页按钮
+  const prevButton = document.createElement('li');
+  prevButton.className = `page-item ${page === 1 ? 'disabled' : ''}`;
+  prevButton.innerHTML = `<a class="page-link" href="#" onclick="changeFavoritesPage(${page - 1})">上一页</a>`;
+  paginationElement.appendChild(prevButton);
+
+  // 页码按钮
+  const startPage = Math.max(1, page - 2);
+  const endPage = Math.min(totalPages, page + 2);
+
+  for (let i = startPage; i <= endPage; i++) {
+    const pageButton = document.createElement('li');
+    pageButton.className = `page-item ${i === page ? 'active' : ''}`;
+    pageButton.innerHTML = `<a class="page-link" href="#" onclick="changeFavoritesPage(${i})">${i}</a>`;
+    paginationElement.appendChild(pageButton);
+  }
+
+  // 下一页按钮
+  const nextButton = document.createElement('li');
+  nextButton.className = `page-item ${page === totalPages ? 'disabled' : ''}`;
+  nextButton.innerHTML = `<a class="page-link" href="#" onclick="changeFavoritesPage(${page + 1})">下一页</a>`;
+  paginationElement.appendChild(nextButton);
+}
+
+// 搜索收藏
+function searchFavorites() {
+  const searchInput = document.getElementById('favoritesSearchInput');
+  const searchTerm = searchInput.value.trim();
+  currentFavoritesSearch = searchTerm;
+  currentFavoritesPage = 1;
+  loadFavorites(
+    currentFavoritesPage,
+    currentFavoritesPageSize,
+    currentFavoritesSearch,
+  );
+}
+
+// 改变每页显示数量
+function changeFavoritesPageSize() {
+  const pageSizeSelect = document.getElementById('favoritesPageSize');
+  const newPageSize = parseInt(pageSizeSelect.value);
+  currentFavoritesPageSize = newPageSize;
+  currentFavoritesPage = 1;
+  loadFavorites(
+    currentFavoritesPage,
+    currentFavoritesPageSize,
+    currentFavoritesSearch,
+  );
+}
+
+// 切换收藏页面
+function changeFavoritesPage(page) {
+  if (page < 1) return;
+  currentFavoritesPage = page;
+  loadFavorites(
+    currentFavoritesPage,
+    currentFavoritesPageSize,
+    currentFavoritesSearch,
+  );
+}
+
+// 重置收藏筛选
+function resetFavoritesFilter() {
+  document.getElementById('favoritesSearchInput').value = '';
+  currentFavoritesSearch = '';
+  currentFavoritesPage = 1;
+  loadFavorites(
+    currentFavoritesPage,
+    currentFavoritesPageSize,
+    currentFavoritesSearch,
+  );
 }
