@@ -161,6 +161,8 @@ function logout() {
 
 // 显示指定区域
 function showSection(sectionName) {
+  console.log('showSection 被调用，sectionName:', sectionName);
+
   // 隐藏所有内容区域
   document.querySelectorAll('.content-section').forEach((section) => {
     section.style.display = 'none';
@@ -173,8 +175,14 @@ function showSection(sectionName) {
 
   // 显示指定区域
   const targetSection = document.getElementById(sectionName + 'Section');
+  console.log('查找的元素ID:', sectionName + 'Section');
+  console.log('找到的元素:', targetSection);
+
   if (targetSection) {
     targetSection.style.display = 'block';
+    console.log('显示区域成功');
+  } else {
+    console.error('未找到目标区域:', sectionName + 'Section');
   }
 
   // 激活对应的导航链接
@@ -208,6 +216,9 @@ function showSection(sectionName) {
       break;
     case 'roles':
       loadRoles();
+      break;
+    case 'hotSearch':
+      loadHotSearch();
       break;
     case 'stats':
       loadStats();
@@ -2402,4 +2413,388 @@ function displayImportResult(result) {
 
 function showCreateCategoryModal() {
   alert('创建分类功能待实现');
+}
+
+// ==================== 工具函数 ====================
+
+// 显示加载状态
+function showLoading(elementId) {
+  const element = document.getElementById(elementId);
+  if (element) {
+    element.innerHTML = `
+      <tr>
+        <td colspan="8" class="text-center">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">加载中...</span>
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+}
+
+// 显示错误信息
+function showError(elementId, message) {
+  const element = document.getElementById(elementId);
+  if (element) {
+    element.innerHTML = `
+      <tr>
+        <td colspan="8" class="text-center text-danger">
+          <i class="bi bi-exclamation-triangle"></i> ${message}
+        </td>
+      </tr>
+    `;
+  }
+}
+
+// 显示成功消息
+function showSuccessMessage(message) {
+  // 创建临时提示元素
+  const alertDiv = document.createElement('div');
+  alertDiv.className =
+    'alert alert-success alert-dismissible fade show position-fixed';
+  alertDiv.style.cssText =
+    'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+  alertDiv.innerHTML = `
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  `;
+
+  document.body.appendChild(alertDiv);
+
+  // 3秒后自动移除
+  setTimeout(() => {
+    if (alertDiv.parentNode) {
+      alertDiv.parentNode.removeChild(alertDiv);
+    }
+  }, 3000);
+}
+
+// ==================== 热搜管理功能 ====================
+
+// 全局变量
+let hotSearchData = [];
+
+// 加载热搜词条数据
+async function loadHotSearch() {
+  console.log('loadHotSearch 函数被调用');
+  console.log('API_BASE_URL:', API_BASE_URL);
+  console.log('authToken:', authToken ? '存在' : '不存在');
+
+  try {
+    showLoading('hotSearchTableBody');
+    console.log('显示加载状态');
+
+    const response = await fetch(`${API_BASE_URL}/hot-search`, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
+
+    console.log('API响应状态:', response.status);
+
+    if (response.ok) {
+      hotSearchData = await response.json();
+      console.log('获取到热搜数据:', hotSearchData);
+      renderHotSearchTable(hotSearchData);
+    } else {
+      console.error('API请求失败:', response.status, response.statusText);
+      showError('hotSearchTableBody', '加载热搜词条失败');
+    }
+  } catch (error) {
+    console.error('加载热搜词条失败:', error);
+    showError('hotSearchTableBody', '加载热搜词条失败');
+  }
+}
+
+// 渲染热搜词条表格
+function renderHotSearchTable(data) {
+  const tbody = document.getElementById('hotSearchTableBody');
+
+  if (!data || data.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" class="text-center text-muted">
+          <i class="bi bi-inbox"></i> 暂无热搜词条
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = data
+    .map(
+      (hotSearch) => `
+    <tr>
+      <td>${hotSearch.id}</td>
+      <td>
+        <strong>${hotSearch.keyword}</strong>
+      </td>
+      <td>${hotSearch.description || '-'}</td>
+      <td>
+        <span class="badge bg-info">${hotSearch.order}</span>
+      </td>
+      <td>
+        <span class="badge bg-primary">${hotSearch.clickCount}</span>
+      </td>
+      <td>
+        <span class="badge ${hotSearch.isActive ? 'bg-success' : 'bg-secondary'}">
+          ${hotSearch.isActive ? '启用' : '禁用'}
+        </span>
+      </td>
+      <td>${formatDate(hotSearch.createdAt)}</td>
+      <td>
+        <div class="btn-group" role="group">
+          <button 
+            class="btn btn-sm btn-outline-primary" 
+            onclick="editHotSearch(${hotSearch.id})"
+            title="编辑"
+          >
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button 
+            class="btn btn-sm btn-outline-${hotSearch.isActive ? 'warning' : 'success'}" 
+            onclick="toggleHotSearchStatus(${hotSearch.id}, ${hotSearch.isActive})"
+            title="${hotSearch.isActive ? '禁用' : '启用'}"
+          >
+            <i class="bi bi-${hotSearch.isActive ? 'pause' : 'play'}"></i>
+          </button>
+          <button 
+            class="btn btn-sm btn-outline-danger" 
+            onclick="deleteHotSearch(${hotSearch.id}, '${hotSearch.keyword}')"
+            title="删除"
+          >
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </td>
+    </tr>
+  `,
+    )
+    .join('');
+}
+
+// 显示创建热搜词条模态框
+function showCreateHotSearchModal() {
+  // 清空表单
+  document.getElementById('createHotSearchForm').reset();
+  document.getElementById('createIsActive').checked = true;
+
+  // 显示模态框
+  const modal = new bootstrap.Modal(
+    document.getElementById('createHotSearchModal'),
+  );
+  modal.show();
+}
+
+// 创建热搜词条
+async function createHotSearch() {
+  const keyword = document.getElementById('createKeyword').value.trim();
+  const description = document.getElementById('createDescription').value.trim();
+  const order = parseInt(document.getElementById('createOrder').value) || 0;
+  const isActive = document.getElementById('createIsActive').checked;
+
+  if (!keyword) {
+    alert('请输入热搜关键词');
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/hot-search`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({
+        keyword,
+        description: description || null,
+        order,
+        isActive,
+      }),
+    });
+
+    if (response.ok) {
+      // 关闭模态框
+      const modal = bootstrap.Modal.getInstance(
+        document.getElementById('createHotSearchModal'),
+      );
+      modal.hide();
+
+      // 重新加载数据
+      await loadHotSearch();
+      showSuccessMessage('热搜词条创建成功');
+    } else {
+      const error = await response.json();
+      alert(`创建失败: ${error.message || '未知错误'}`);
+    }
+  } catch (error) {
+    console.error('创建热搜词条失败:', error);
+    alert('创建热搜词条失败');
+  }
+}
+
+// 编辑热搜词条
+async function editHotSearch(id) {
+  const hotSearch = hotSearchData.find((item) => item.id === id);
+  if (!hotSearch) {
+    alert('热搜词条不存在');
+    return;
+  }
+
+  // 填充表单
+  document.getElementById('editHotSearchId').value = hotSearch.id;
+  document.getElementById('editKeyword').value = hotSearch.keyword;
+  document.getElementById('editDescription').value =
+    hotSearch.description || '';
+  document.getElementById('editOrder').value = hotSearch.order;
+  document.getElementById('editIsActive').checked = hotSearch.isActive;
+
+  // 显示模态框
+  const modal = new bootstrap.Modal(
+    document.getElementById('editHotSearchModal'),
+  );
+  modal.show();
+}
+
+// 更新热搜词条
+async function updateHotSearch() {
+  const id = document.getElementById('editHotSearchId').value;
+  const keyword = document.getElementById('editKeyword').value.trim();
+  const description = document.getElementById('editDescription').value.trim();
+  const order = parseInt(document.getElementById('editOrder').value) || 0;
+  const isActive = document.getElementById('editIsActive').checked;
+
+  if (!keyword) {
+    alert('请输入热搜关键词');
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/hot-search/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({
+        keyword,
+        description: description || null,
+        order,
+        isActive,
+      }),
+    });
+
+    if (response.ok) {
+      // 关闭模态框
+      const modal = bootstrap.Modal.getInstance(
+        document.getElementById('editHotSearchModal'),
+      );
+      modal.hide();
+
+      // 重新加载数据
+      await loadHotSearch();
+      showSuccessMessage('热搜词条更新成功');
+    } else {
+      const error = await response.json();
+      alert(`更新失败: ${error.message || '未知错误'}`);
+    }
+  } catch (error) {
+    console.error('更新热搜词条失败:', error);
+    alert('更新热搜词条失败');
+  }
+}
+
+// 切换热搜词条状态
+async function toggleHotSearchStatus(id, currentStatus) {
+  const action = currentStatus ? '禁用' : '启用';
+
+  if (!confirm(`确定要${action}此热搜词条吗？`)) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/hot-search/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({
+        isActive: !currentStatus,
+      }),
+    });
+
+    if (response.ok) {
+      await loadHotSearch();
+      showSuccessMessage(`热搜词条${action}成功`);
+    } else {
+      const error = await response.json();
+      alert(`${action}失败: ${error.message || '未知错误'}`);
+    }
+  } catch (error) {
+    console.error(`${action}热搜词条失败:`, error);
+    alert(`${action}热搜词条失败`);
+  }
+}
+
+// 删除热搜词条
+async function deleteHotSearch(id, keyword) {
+  if (!confirm(`确定要删除热搜词条"${keyword}"吗？此操作不可恢复！`)) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/hot-search/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
+
+    if (response.ok) {
+      await loadHotSearch();
+      showSuccessMessage('热搜词条删除成功');
+    } else {
+      const error = await response.json();
+      alert(`删除失败: ${error.message || '未知错误'}`);
+    }
+  } catch (error) {
+    console.error('删除热搜词条失败:', error);
+    alert('删除热搜词条失败');
+  }
+}
+
+// 筛选热搜词条
+function filterHotSearch() {
+  const keyword = document
+    .getElementById('hotSearchKeyword')
+    .value.toLowerCase();
+  const status = document.getElementById('hotSearchStatus').value;
+
+  let filteredData = hotSearchData;
+
+  // 按关键词筛选
+  if (keyword) {
+    filteredData = filteredData.filter(
+      (item) =>
+        item.keyword.toLowerCase().includes(keyword) ||
+        (item.description && item.description.toLowerCase().includes(keyword)),
+    );
+  }
+
+  // 按状态筛选
+  if (status !== '') {
+    const isActive = status === 'true';
+    filteredData = filteredData.filter((item) => item.isActive === isActive);
+  }
+
+  renderHotSearchTable(filteredData);
+}
+
+// 重置筛选
+function resetHotSearchFilter() {
+  document.getElementById('hotSearchKeyword').value = '';
+  document.getElementById('hotSearchStatus').value = '';
+  renderHotSearchTable(hotSearchData);
 }
