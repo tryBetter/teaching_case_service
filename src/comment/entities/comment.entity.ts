@@ -42,7 +42,7 @@ export class Comment {
   parentId?: number;
 
   @ApiProperty({
-    description: '作者信息',
+    description: '作者信息（包含头像）',
   })
   author?: any;
 

@@ -52,6 +52,7 @@ export class CommentService {
           id: true,
           name: true,
           email: true,
+          avatar: true,
         },
       },
       article: {
@@ -67,6 +68,7 @@ export class CommentService {
               id: true,
               name: true,
               email: true,
+              avatar: true,
             },
           },
           likes: {
@@ -76,6 +78,7 @@ export class CommentService {
                   id: true,
                   name: true,
                   email: true,
+                  avatar: true,
                 },
               },
             },
@@ -89,6 +92,7 @@ export class CommentService {
               id: true,
               name: true,
               email: true,
+              avatar: true,
             },
           },
         },
@@ -211,6 +215,7 @@ export class CommentService {
             id: true,
             name: true,
             email: true,
+            avatar: true,
           },
         },
         article: {
@@ -235,6 +240,7 @@ export class CommentService {
                     id: true,
                     name: true,
                     email: true,
+                    avatar: true,
                   },
                 },
               },
@@ -308,6 +314,7 @@ export class CommentService {
             id: true,
             name: true,
             email: true,
+            avatar: true,
           },
         },
         article: {
@@ -335,6 +342,7 @@ export class CommentService {
             id: true,
             name: true,
             email: true,
+            avatar: true,
           },
         },
         article: {

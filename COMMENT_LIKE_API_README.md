@@ -58,7 +58,8 @@ model Comment {
   "user": {
     "id": 1,
     "name": "张三",
-    "email": "zhangsan@example.com"
+    "email": "zhangsan@example.com",
+    "avatar": "https://example.com/avatar.jpg"
   },
   "comment": {
     "id": 1,
@@ -89,7 +90,8 @@ model Comment {
   "user": {
     "id": 1,
     "name": "张三",
-    "email": "zhangsan@example.com"
+    "email": "zhangsan@example.com",
+    "avatar": "https://example.com/avatar.jpg"
   },
   "comment": {
     "id": 1,
@@ -125,7 +127,8 @@ model Comment {
     "author": {
       "id": 1,
       "name": "张三",
-      "email": "zhangsan@example.com"
+      "email": "zhangsan@example.com",
+      "avatar": "https://example.com/avatar.jpg"
     },
     "article": {
       "id": 1,
@@ -141,7 +144,8 @@ model Comment {
         "user": {
           "id": 1,
           "name": "张三",
-          "email": "zhangsan@example.com"
+          "email": "zhangsan@example.com",
+          "avatar": "https://example.com/avatar.jpg"
         }
       }
     ],
