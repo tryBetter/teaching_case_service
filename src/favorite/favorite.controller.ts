@@ -267,11 +267,6 @@ export class FavoriteController {
                 example: '如何学习NestJS框架',
                 description: '文章标题',
               },
-              content: {
-                type: 'string',
-                example: '这是一篇关于NestJS框架学习的详细教程...',
-                description: '文章内容，可能为null',
-              },
               published: {
                 type: 'boolean',
                 example: true,
