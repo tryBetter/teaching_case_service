@@ -325,8 +325,8 @@ export class ArticlesService {
    * @param id 文章id
    * @returns 文章和对应的文章评论
    */
-  findOne(id: number) {
-    return this.prisma.article.findUnique({
+  async findOne(id: number, userId?: number) {
+    const article = await this.prisma.article.findUnique({
       where: { id },
       include: {
         comments: true,
@@ -349,6 +349,28 @@ export class ArticlesService {
         },
       },
     });
+
+    // 如果用户已登录，自动添加浏览历史
+    if (article && userId) {
+      // 使用 upsert 自动处理已存在的情况
+      await this.prisma.viewHistory.upsert({
+        where: {
+          userId_articleId: {
+            userId,
+            articleId: id,
+          },
+        },
+        update: {
+          updatedAt: new Date(),
+        },
+        create: {
+          userId,
+          articleId: id,
+        },
+      });
+    }
+
+    return article;
   }
 
   /**

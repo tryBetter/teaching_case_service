@@ -10,6 +10,7 @@ import { MediaModule } from './media/media.module';
 import { CommentModule } from './comment/comment.module';
 import { FavoriteModule } from './favorite/favorite.module';
 import { NoteModule } from './note/note.module';
+import { ViewHistoryModule } from './view-history/view-history.module';
 import { CategoriesModule } from './categories/categories.module';
 import { FilterConditionsModule } from './filter-conditions/filter-conditions.module';
 import { HotSearchModule } from './hot-search/hot-search.module';
@@ -29,6 +30,7 @@ import { JwtAuthGuard } from './auth/auth.guard';
     CommentModule,
     FavoriteModule,
     NoteModule,
+    ViewHistoryModule,
     CategoriesModule,
     FilterConditionsModule,
     HotSearchModule,

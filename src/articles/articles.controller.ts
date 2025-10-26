@@ -420,8 +420,8 @@ export class ArticlesController {
   @Public()
   @ApiResponse({ status: 404, description: '文章不存在' })
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.articlesService.findOne(+id);
+  findOne(@Param('id') id: string, @CurrentUser() user?: AuthenticatedUser) {
+    return this.articlesService.findOne(+id, user?.userId);
   }
 
   @ApiOperation({

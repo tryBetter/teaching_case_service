@@ -40,6 +40,7 @@ model User {
   notes     Note[]
   commentLikes CommentLike[]
   uploadedMedia Media[] // 用户上传的媒体文件
+  viewHistory ViewHistory[] // 用户浏览历史
 
   // 教师-助教关联关系
   teacherAssistants TeacherAssistant[] @relation("TeacherAssistants") // 作为教师时的助教列表
@@ -73,6 +74,7 @@ model Article {
   comments  Comment[]
   favorites Favorite[]
   notes     Note[]
+  viewHistory ViewHistory[] // 文章浏览历史
 }
 
 model Media {
@@ -297,4 +299,20 @@ model TeacherAssistant {
   assistantId Int
 
   @@unique([teacherId, assistantId]) // 防止重复关联
+}
+
+// 文章浏览历史模型
+model ViewHistory {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  articleId Int
+
+  @@unique([userId, articleId]) // 每个用户对每篇文章只有一条最新浏览记录
+  @@index([userId, createdAt]) // 索引：用于按用户和时间查询
 }
