@@ -459,7 +459,7 @@ export class FavoriteController {
         },
         message: {
           type: 'string',
-          example: '评论不存在',
+          example: '未收藏该文章',
         },
         error: {
           type: 'string',

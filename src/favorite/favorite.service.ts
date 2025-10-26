@@ -142,10 +142,11 @@ export class FavoriteService {
    * 检查用户是否收藏了某篇文章
    * @param userId 用户ID
    * @param articleId 文章ID
-   * @returns 收藏记录或null
+   * @returns 收藏记录
+   * @throws NotFoundException 如果未收藏该文章
    */
   async findOne(userId: number, articleId: number) {
-    return this.prisma.favorite.findUnique({
+    const favorite = await this.prisma.favorite.findUnique({
       where: {
         userId_articleId: {
           userId,
@@ -169,6 +170,12 @@ export class FavoriteService {
         },
       },
     });
+
+    if (!favorite) {
+      throw new NotFoundException('未收藏该文章');
+    }
+
+    return favorite;
   }
 
   /**

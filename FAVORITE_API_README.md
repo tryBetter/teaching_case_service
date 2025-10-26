@@ -108,6 +108,13 @@
 
 **错误响应**:
 - `404`: 未收藏该文章
+  ```json
+  {
+    "statusCode": 404,
+    "message": "未收藏该文章",
+    "error": "Not Found"
+  }
+  ```
 
 ### 4. 取消收藏文章
 **接口**: `DELETE /favorite/:articleId`
