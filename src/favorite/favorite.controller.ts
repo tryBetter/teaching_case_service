@@ -207,96 +207,111 @@ export class FavoriteController {
   @ApiOperation({
     summary: '获取我的收藏列表',
     description:
-      '获取当前用户收藏的所有文章列表。返回按收藏时间倒序排列的收藏记录，每条记录包含完整的用户信息、文章信息和作者信息。需要用户认证，只能查看自己的收藏列表。',
+      '获取当前用户收藏的所有文章列表。返回按收藏时间倒序排列的收藏记录，每条记录包含完整的用户信息、文章信息和作者信息。需要用户认证，只能查看自己的收藏列表。返回结果包含分页信息（总数和总页数）。',
   })
   @ApiResponse({
     status: 200,
-    description: '获取收藏列表成功，返回按收藏时间倒序排列的收藏记录数组',
+    description: '获取收藏列表成功，返回按收藏时间倒序排列的收藏记录和分页信息',
     schema: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          userId: {
-            type: 'number',
-            example: 1,
-            description: '收藏用户的ID',
-          },
-          articleId: {
-            type: 'number',
-            example: 1,
-            description: '被收藏的文章ID',
-          },
-          createdAt: {
-            type: 'string',
-            format: 'date-time',
-            example: '2024-01-01T00:00:00.000Z',
-            description: '收藏创建时间，用于排序',
-          },
-          user: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: {
             type: 'object',
             properties: {
-              id: {
+              userId: {
                 type: 'number',
                 example: 1,
-                description: '用户唯一标识',
+                description: '收藏用户的ID',
               },
-              name: {
-                type: 'string',
-                example: '张三',
-                description: '用户姓名，可能为null',
-              },
-              email: {
-                type: 'string',
-                example: 'zhangsan@example.com',
-                description: '用户邮箱地址',
-              },
-            },
-            description: '收藏用户的详细信息',
-          },
-          article: {
-            type: 'object',
-            properties: {
-              id: {
+              articleId: {
                 type: 'number',
                 example: 1,
-                description: '文章唯一标识',
-              },
-              title: {
-                type: 'string',
-                example: '如何学习NestJS框架',
-                description: '文章标题',
-              },
-              published: {
-                type: 'boolean',
-                example: true,
-                description: '文章是否已发布',
+                description: '被收藏的文章ID',
               },
               createdAt: {
                 type: 'string',
                 format: 'date-time',
                 example: '2024-01-01T00:00:00.000Z',
-                description: '文章创建时间',
+                description: '收藏创建时间，用于排序',
               },
-              author: {
+              user: {
                 type: 'object',
                 properties: {
                   id: {
                     type: 'number',
-                    example: 2,
-                    description: '作者用户ID',
+                    example: 1,
+                    description: '用户唯一标识',
                   },
                   name: {
                     type: 'string',
-                    example: '李四',
-                    description: '作者姓名，可能为null',
+                    example: '张三',
+                    description: '用户姓名，可能为null',
+                  },
+                  email: {
+                    type: 'string',
+                    example: 'zhangsan@example.com',
+                    description: '用户邮箱地址',
                   },
                 },
-                description: '文章作者的基本信息',
+                description: '收藏用户的详细信息',
+              },
+              article: {
+                type: 'object',
+                properties: {
+                  id: {
+                    type: 'number',
+                    example: 1,
+                    description: '文章唯一标识',
+                  },
+                  title: {
+                    type: 'string',
+                    example: '如何学习NestJS框架',
+                    description: '文章标题',
+                  },
+                  published: {
+                    type: 'boolean',
+                    example: true,
+                    description: '文章是否已发布',
+                  },
+                  createdAt: {
+                    type: 'string',
+                    format: 'date-time',
+                    example: '2024-01-01T00:00:00.000Z',
+                    description: '文章创建时间',
+                  },
+                  author: {
+                    type: 'object',
+                    properties: {
+                      id: {
+                        type: 'number',
+                        example: 2,
+                        description: '作者用户ID',
+                      },
+                      name: {
+                        type: 'string',
+                        example: '李四',
+                        description: '作者姓名，可能为null',
+                      },
+                    },
+                    description: '文章作者的基本信息',
+                  },
+                },
+                description: '被收藏文章的详细信息，包含作者信息',
               },
             },
-            description: '被收藏文章的详细信息，包含作者信息',
           },
+        },
+        total: {
+          type: 'number',
+          example: 50,
+          description: '收藏文章总数',
+        },
+        totalPages: {
+          type: 'number',
+          example: 5,
+          description: '总页数（根据每页数量动态计算）',
         },
       },
     },

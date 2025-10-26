@@ -43,32 +43,40 @@
 ### 2. 获取我的收藏列表
 **接口**: `GET /favorite`
 **认证**: 需要JWT令牌
-**描述**: 获取当前用户收藏的所有文章列表
+**描述**: 获取当前用户收藏的所有文章列表，返回结果包含分页信息
+
+**查询参数**:
+- `page`: 页码（可选，用于分页）
+- `limit`: 每页数量（可选，用于分页）
 
 **响应示例**:
 ```json
-[
-  {
-    "userId": 1,
-    "articleId": 1,
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "user": {
-      "id": 1,
-      "name": "张三",
-      "email": "zhangsan@example.com"
-    },
-    "article": {
-      "id": 1,
-      "title": "文章标题",
-      "published": true,
+{
+  "data": [
+    {
+      "userId": 1,
+      "articleId": 1,
       "createdAt": "2024-01-01T00:00:00.000Z",
-      "author": {
-        "id": 2,
-        "name": "作者"
+      "user": {
+        "id": 1,
+        "name": "张三",
+        "email": "zhangsan@example.com"
+      },
+      "article": {
+        "id": 1,
+        "title": "文章标题",
+        "published": true,
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "author": {
+          "id": 2,
+          "name": "作者"
+        }
       }
     }
-  }
-]
+  ],
+  "total": 50,
+  "totalPages": 5
+}
 ```
 
 ### 3. 检查是否收藏了某篇文章

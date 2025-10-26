@@ -101,39 +101,41 @@ export class FavoriteService {
       },
     };
 
+    // 先获取总数
+    const total = await this.prisma.favorite.count({ where });
+
     // 如果提供了分页参数，返回分页数据
     if (page && limit) {
       const skip = (page - 1) * limit;
-      const [data, total] = await Promise.all([
-        this.prisma.favorite.findMany({
-          where,
-          include,
-          orderBy: { createdAt: 'desc' },
-          skip,
-          take: limit,
-        }),
-        this.prisma.favorite.count({ where }),
-      ]);
+      const data = await this.prisma.favorite.findMany({
+        where,
+        include,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      });
 
       return {
         data,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
+        total,
+        totalPages: Math.ceil(total / limit),
       };
     }
 
-    // 否则返回所有数据（保持向后兼容）
-    return this.prisma.favorite.findMany({
+    // 否则返回所有数据（但统一返回格式）
+    const data = await this.prisma.favorite.findMany({
       where,
       include,
       orderBy: {
         createdAt: 'desc',
       },
     });
+
+    return {
+      data,
+      total,
+      totalPages: 1,
+    };
   }
 
   /**
