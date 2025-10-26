@@ -136,4 +136,42 @@ export class ViewHistoryController {
   clearAll(@CurrentUser() user: AuthenticatedUser) {
     return this.viewHistoryService.clearAll(user.userId);
   }
+
+  @ApiOperation({
+    summary: '获取用户数据统计',
+    description: '获取当前用户的浏览历史、收藏、笔记、评论等数据统计',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '获取统计成功',
+    schema: {
+      type: 'object',
+      properties: {
+        viewHistoryCount: {
+          type: 'number',
+          example: 25,
+          description: '浏览历史数量',
+        },
+        favoriteCount: {
+          type: 'number',
+          example: 12,
+          description: '收藏文章数量',
+        },
+        noteCount: {
+          type: 'number',
+          example: 8,
+          description: '笔记数量',
+        },
+        commentCount: {
+          type: 'number',
+          example: 15,
+          description: '评论数量',
+        },
+      },
+    },
+  })
+  @Get('stats/user')
+  getUserStats(@CurrentUser() user: AuthenticatedUser) {
+    return this.viewHistoryService.getUserStats(user.userId);
+  }
 }

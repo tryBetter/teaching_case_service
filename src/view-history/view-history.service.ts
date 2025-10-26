@@ -266,4 +266,38 @@ export class ViewHistoryService {
       deletedCount: result.count,
     };
   }
+
+  /**
+   * 获取用户数据统计
+   * @param userId 用户ID
+   * @returns 用户数据统计
+   */
+  async getUserStats(userId: number) {
+    const [viewHistoryCount, favoriteCount, noteCount, commentCount] =
+      await Promise.all([
+        // 浏览历史数量
+        this.prisma.viewHistory.count({
+          where: { userId },
+        }),
+        // 收藏数量
+        this.prisma.favorite.count({
+          where: { userId },
+        }),
+        // 笔记数量
+        this.prisma.note.count({
+          where: { userId },
+        }),
+        // 评论数量
+        this.prisma.comment.count({
+          where: { authorId: userId },
+        }),
+      ]);
+
+    return {
+      viewHistoryCount,
+      favoriteCount,
+      noteCount,
+      commentCount,
+    };
+  }
 }
