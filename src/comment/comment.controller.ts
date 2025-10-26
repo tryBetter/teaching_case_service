@@ -88,7 +88,8 @@ export class CommentController {
 
   @ApiOperation({
     summary: '获取所有评论',
-    description: '获取所有评论列表，支持按文章ID和作者ID筛选。',
+    description:
+      '获取所有评论列表，支持按文章ID和作者ID筛选。返回数据包含作者头像、点赞用户头像等信息。',
   })
   @ApiQuery({
     name: 'articleId',
@@ -137,8 +138,13 @@ export class CommentController {
               id: { type: 'number', example: 1 },
               name: { type: 'string', example: '张三' },
               email: { type: 'string', example: 'zhangsan@example.com' },
+              avatar: {
+                type: 'string',
+                example: 'https://example.com/avatar.jpg',
+                description: '用户头像',
+              },
             },
-            description: '作者信息',
+            description: '作者信息（包含头像）',
           },
           article: {
             type: 'object',
@@ -208,7 +214,7 @@ export class CommentController {
   @ApiOperation({
     summary: '根据ID获取评论',
     description:
-      '根据评论ID获取单条评论的详细信息，包括作者信息、文章信息和子评论。',
+      '根据评论ID获取单条评论的详细信息，包括作者信息（含头像）、文章信息和子评论。',
   })
   @ApiParam({ name: 'id', description: '评论ID' })
   @ApiResponse({
@@ -244,8 +250,13 @@ export class CommentController {
             id: { type: 'number', example: 1 },
             name: { type: 'string', example: '张三' },
             email: { type: 'string', example: 'zhangsan@example.com' },
+            avatar: {
+              type: 'string',
+              example: 'https://example.com/avatar.jpg',
+              description: '用户头像',
+            },
           },
-          description: '作者信息',
+          description: '作者信息（包含头像）',
         },
         article: {
           type: 'object',
@@ -415,7 +426,7 @@ export class CommentController {
 
   @ApiOperation({
     summary: '点赞评论',
-    description: '对指定评论进行点赞操作。',
+    description: '对指定评论进行点赞操作。返回数据包含用户头像信息。',
   })
   @ApiParam({ name: 'id', description: '评论ID' })
   @ApiResponse({
@@ -438,8 +449,13 @@ export class CommentController {
             id: { type: 'number', example: 1 },
             name: { type: 'string', example: '张三' },
             email: { type: 'string', example: 'zhangsan@example.com' },
+            avatar: {
+              type: 'string',
+              example: 'https://example.com/avatar.jpg',
+              description: '用户头像',
+            },
           },
-          description: '用户信息',
+          description: '用户信息（包含头像）',
         },
         comment: {
           type: 'object',
@@ -483,7 +499,7 @@ export class CommentController {
 
   @ApiOperation({
     summary: '取消点赞评论',
-    description: '取消对指定评论的点赞操作。',
+    description: '取消对指定评论的点赞操作。返回数据包含用户头像信息。',
   })
   @ApiParam({ name: 'id', description: '评论ID' })
   @ApiResponse({
@@ -506,8 +522,13 @@ export class CommentController {
             id: { type: 'number', example: 1 },
             name: { type: 'string', example: '张三' },
             email: { type: 'string', example: 'zhangsan@example.com' },
+            avatar: {
+              type: 'string',
+              example: 'https://example.com/avatar.jpg',
+              description: '用户头像',
+            },
           },
-          description: '用户信息',
+          description: '用户信息（包含头像）',
         },
         comment: {
           type: 'object',
