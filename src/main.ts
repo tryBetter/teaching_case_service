@@ -1,11 +1,21 @@
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // 配置全局验证管道
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true, // 自动转换类型
+      whitelist: true, // 只保留DTO中定义的属性
+      forbidNonWhitelisted: true, // 禁止未定义的属性
+    }),
+  );
 
   // 配置CORS
   const corsOrigins = process.env.CORS_ORIGINS

@@ -8,16 +8,21 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     super();
   }
 
-  canActivate(context: ExecutionContext) {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const isPublic = this.reflector.getAllAndOverride<boolean>('isPublic', [
       context.getHandler(),
       context.getClass(),
     ]);
 
     if (isPublic) {
-      return true;
+      // 对于公开接口，仍然尝试解析 JWT token，但不强制要求认证
+      try {
+        return (await super.canActivate(context)) as boolean;
+      } catch {
+        return true; // 如果认证失败，仍然允许访问公开接口
+      }
     }
 
-    return super.canActivate(context);
+    return super.canActivate(context) as Promise<boolean>;
   }
 }

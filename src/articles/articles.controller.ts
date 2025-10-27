@@ -410,7 +410,7 @@ export class ArticlesController {
   @ApiOperation({
     summary: '获取文章详情',
     description:
-      '根据文章ID获取文章的完整信息，包括文章内容、评论、分类、筛选条件等。此接口返回完整的文章内容（content字段）。适用场景：文章阅读页面、文章编辑预览。注意：此接口为公开接口，不需要认证。',
+      '根据文章ID获取文章的完整信息，包括文章内容、评论、分类、筛选条件等。此接口返回完整的文章内容（content字段）。如果用户已登录，会自动创建浏览历史记录。适用场景：文章阅读页面、文章编辑预览。注意：此接口为公开接口，不需要认证，但登录用户会自动记录浏览历史。',
   })
   @ApiParam({ name: 'id', description: '文章ID', example: 1, type: Number })
   @ApiResponse({

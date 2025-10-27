@@ -323,6 +323,7 @@ export class ArticlesService {
   /**
    * 根据id查询文章和对应的文章评论（包括已删除的）
    * @param id 文章id
+   * @param userId 用户ID（可选，如果提供则自动创建浏览历史）
    * @returns 文章和对应的文章评论
    */
   async findOne(id: number, userId?: number) {
@@ -350,24 +351,32 @@ export class ArticlesService {
       },
     });
 
-    // 如果用户已登录，自动添加浏览历史
+    // 如果用户已登录且文章存在，自动添加浏览历史
     if (article && userId) {
-      // 使用 upsert 自动处理已存在的情况
-      await this.prisma.viewHistory.upsert({
-        where: {
-          userId_articleId: {
+      try {
+        // 使用 upsert 自动处理已存在的情况
+        await this.prisma.viewHistory.upsert({
+          where: {
+            userId_articleId: {
+              userId,
+              articleId: id,
+            },
+          },
+          update: {
+            updatedAt: new Date(),
+          },
+          create: {
             userId,
             articleId: id,
           },
-        },
-        update: {
-          updatedAt: new Date(),
-        },
-        create: {
-          userId,
-          articleId: id,
-        },
-      });
+        });
+      } catch (error) {
+        // 如果创建浏览历史失败，记录错误但不影响文章的正常返回
+        console.warn(
+          `Failed to create view history for user ${userId} and article ${id}:`,
+          error instanceof Error ? error.message : String(error),
+        );
+      }
     }
 
     return article;
