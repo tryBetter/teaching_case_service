@@ -149,6 +149,8 @@ export class ViewHistoryService {
       return {
         data,
         total,
+        page,
+        limit,
         totalPages: Math.ceil(total / limit),
       };
     }
@@ -166,6 +168,8 @@ export class ViewHistoryService {
     return {
       data,
       total,
+      page: 1,
+      limit: total,
       totalPages: 1,
     };
   }
