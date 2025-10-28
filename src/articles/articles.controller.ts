@@ -494,7 +494,8 @@ export class ArticlesController {
   @ApiParam({ name: 'id', description: '文章ID' })
   @ApiResponse({ status: 200, description: '文章发布成功' })
   @ApiResponse({ status: 404, description: '文章不存在' })
-  @RequireSuperAdmin()
+  @ApiResponse({ status: 403, description: '权限不足，需要文章发布权限' })
+  @RequirePermissions([Permission.ARTICLE_PUBLISH])
   @Post(':id/publish')
   async publish(@Param('id') id: string) {
     return this.adminArticlesService.publish(+id);
@@ -504,7 +505,8 @@ export class ArticlesController {
   @ApiParam({ name: 'id', description: '文章ID' })
   @ApiResponse({ status: 200, description: '取消发布成功' })
   @ApiResponse({ status: 404, description: '文章不存在' })
-  @RequireSuperAdmin()
+  @ApiResponse({ status: 403, description: '权限不足，需要文章发布权限' })
+  @RequirePermissions([Permission.ARTICLE_PUBLISH])
   @Post(':id/unpublish')
   async unpublish(@Param('id') id: string) {
     return this.adminArticlesService.unpublish(+id);
