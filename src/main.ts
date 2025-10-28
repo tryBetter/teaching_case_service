@@ -8,12 +8,11 @@ import { join } from 'path';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // 配置全局验证管道
+  // 配置全局验证管道 - 简化版本
   app.useGlobalPipes(
     new ValidationPipe({
-      transform: true, // 自动转换类型
-      whitelist: true, // 只保留DTO中定义的属性
-      forbidNonWhitelisted: true, // 禁止未定义的属性
+      transform: true, // 保留类型转换功能
+      // 移除 whitelist 和 forbidNonWhitelisted 以简化验证
     }),
   );
 

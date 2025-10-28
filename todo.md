@@ -20,3 +20,5 @@
 npx prisma generate
 npx prisma migrate deploy
 npx prisma migrate dev
+
+pm2 logs teaching-case-service --lines 10 --nostream
