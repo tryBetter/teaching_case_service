@@ -148,26 +148,27 @@ export class CommentService {
 
       return {
         data,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       };
     }
 
     // 否则返回所有数据（保持向后兼容）
-    const comments = await this.prisma.comment.findMany({
-      where,
-      include,
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    const [comments, total] = await Promise.all([
+      this.prisma.comment.findMany({
+        where,
+        include,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      this.prisma.comment.count({ where }),
+    ]);
 
     // 为每个评论添加点赞统计和当前用户点赞状态
-    return Promise.all(
+    const data = await Promise.all(
       comments.map(async (comment) => {
         const likeCount = comment.likes.length;
         const isLiked = currentUserId
@@ -198,6 +199,14 @@ export class CommentService {
         };
       }),
     );
+
+    return {
+      data,
+      total,
+      page: 1,
+      limit: total,
+      totalPages: 1,
+    };
   }
 
   /**

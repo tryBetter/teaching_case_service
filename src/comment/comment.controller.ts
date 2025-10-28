@@ -18,6 +18,7 @@ import {
 } from '@nestjs/swagger';
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { CreateCommentRequestDto } from './dto/create-comment-request.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { CurrentUser } from '../auth/user.decorator';
 import type { AuthenticatedUser } from '../auth/interfaces/user.interface';
@@ -77,11 +78,11 @@ export class CommentController {
   })
   @Post()
   create(
-    @Body() createCommentDto: CreateCommentDto,
+    @Body() createCommentRequestDto: CreateCommentRequestDto,
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.commentService.create({
-      ...createCommentDto,
+      ...createCommentRequestDto,
       authorId: user.userId,
     });
   }

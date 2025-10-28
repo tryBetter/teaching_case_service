@@ -7,7 +7,7 @@ import {
   IsPositive,
 } from 'class-validator';
 
-export class CreateCommentDto {
+export class CreateCommentRequestDto {
   @ApiProperty({
     description: '评论内容',
     example: '这是一条很有用的评论！',
@@ -15,14 +15,6 @@ export class CreateCommentDto {
   @IsString({ message: '评论内容必须是字符串' })
   @IsNotEmpty({ message: '评论内容不能为空' })
   content: string;
-
-  @ApiProperty({
-    description: '评论作者ID',
-    example: 1,
-  })
-  @IsNumber({}, { message: '作者ID必须是数字' })
-  @IsPositive({ message: '作者ID必须是正数' })
-  authorId: number;
 
   @ApiProperty({
     description: '被评论的文章ID',
