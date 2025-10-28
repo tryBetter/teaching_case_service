@@ -18,4 +18,5 @@
 
 // 更新数据库
 npx prisma generate
-npx prisma migrate dev --name add_user_avatar_major
+npx prisma migrate deploy
+npx prisma migrate dev

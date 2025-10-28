@@ -89,6 +89,8 @@ export class FavoriteService {
         select: {
           id: true,
           title: true,
+          cover: true,
+          keywords: true,
           published: true,
           createdAt: true,
           author: {
