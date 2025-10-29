@@ -367,8 +367,8 @@ export class FavoriteController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    // 如果明确提供了userId，使用该userId；否则不传递userId（返回所有数据）
-    const targetUserId = userId ? +userId : undefined;
+    // 如果明确提供了userId，使用该userId；否则使用当前用户的ID（返回当前用户的收藏）
+    const targetUserId = userId ? +userId : user?.userId;
     return this.favoriteService.findAll(targetUserId, {
       page: page ? +page : undefined,
       limit: limit ? +limit : undefined,

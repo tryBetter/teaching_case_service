@@ -71,11 +71,17 @@ export class FavoriteService {
    * 获取用户的所有收藏
    * @param userId 用户ID
    * @param options 分页选项
-   * @returns 收藏列表
+   * @returns 收藏列表（只返回已发布的案例）
    */
   async findAll(userId?: number, options?: { page?: number; limit?: number }) {
     const { page, limit } = options || {};
-    const where = userId ? { userId } : {};
+    // 构建查询条件：包含用户ID过滤和只返回已发布的文章
+    const where = {
+      ...(userId ? { userId } : {}),
+      article: {
+        published: true, // 只返回已发布的案例
+      },
+    };
 
     const include = {
       user: {
@@ -103,7 +109,7 @@ export class FavoriteService {
       },
     };
 
-    // 先获取总数
+    // 先获取总数（只统计已发布的文章）
     const total = await this.prisma.favorite.count({ where });
 
     // 如果提供了分页参数，返回分页数据
