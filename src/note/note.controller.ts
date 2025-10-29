@@ -167,6 +167,14 @@ export class NoteController {
             properties: {
               id: { type: 'number', example: 1 },
               title: { type: 'string', example: '如何学习NestJS' },
+              summary: {
+                type: 'string',
+                example: '本文介绍了NestJS的基本概念和使用方法...',
+              },
+              cover: {
+                type: 'string',
+                example: 'https://example.com/cover.jpg',
+              },
               // 注意：列表接口不返回文章内容 content 字段
               published: { type: 'boolean', example: true },
               createdAt: {
@@ -183,7 +191,7 @@ export class NoteController {
                 description: '文章作者信息',
               },
             },
-            description: '文章基本信息（不包含文章内容）',
+            description: '文章基本信息（包含概述和封面图，不包含文章内容）',
           },
         },
       },

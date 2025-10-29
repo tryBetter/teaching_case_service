@@ -83,6 +83,8 @@ export class NoteService {
         select: {
           id: true,
           title: true,
+          summary: true,
+          cover: true,
           // content: false, // 列表接口不返回文章内容
           published: true,
           createdAt: true,
