@@ -99,6 +99,7 @@ export class FavoriteService {
           keywords: true,
           published: true,
           createdAt: true,
+          updatedAt: true,
           author: {
             select: {
               id: true,
