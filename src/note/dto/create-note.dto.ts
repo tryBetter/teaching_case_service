@@ -9,10 +9,9 @@ import {
 
 export class CreateNoteDto {
   @ApiProperty({
-    description: '笔记内容',
+    description:
+      '笔记内容，支持字符串、JSON对象转换的字符串、Markdown字符串等大部分特殊格式的字符串数据',
     example: '这篇文章很有用，特别是关于NestJS的依赖注入部分。',
-    minLength: 1,
-    maxLength: 2000,
   })
   @IsString({ message: '笔记内容必须是字符串' })
   @IsNotEmpty({ message: '笔记内容不能为空' })
