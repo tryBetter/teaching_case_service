@@ -15,6 +15,7 @@ import {
   ApiResponse,
   ApiQuery,
   ApiBearerAuth,
+  ApiBody,
 } from '@nestjs/swagger';
 import { NoteService } from './note.service';
 import { CreateNoteDto } from './dto/create-note.dto';
@@ -32,7 +33,7 @@ export class NoteController {
   @ApiOperation({
     summary: '创建笔记',
     description:
-      '为指定文章创建新的笔记。笔记内容不能为空，且长度不能超过2000字符。',
+      '为指定文章创建新的笔记。笔记内容不能为空，支持字符串、JSON 字符串、Markdown 等大部分特殊格式的字符串数据。',
   })
   @ApiResponse({
     status: 201,
@@ -116,6 +117,47 @@ export class NoteController {
       },
     },
   })
+  @ApiBody({
+    description:
+      '创建笔记请求体。content 支持字符串、JSON 字符串、Markdown 等特殊格式字符串。',
+    schema: {
+      type: 'object',
+      required: ['content', 'articleId'],
+      properties: {
+        content: {
+          type: 'string',
+          description:
+            '笔记内容，支持字符串、JSON 对象转换的字符串、Markdown 等大部分特殊格式字符串',
+        },
+        articleId: { type: 'number', example: 1, minimum: 1 },
+      },
+      examples: {
+        plain: {
+          summary: '纯文本',
+          value: {
+            content: '这是一篇关于 NestJS 的文章，内容很有用。',
+            articleId: 1,
+          },
+        },
+        jsonString: {
+          summary: 'JSON 字符串',
+          value: {
+            content:
+              '{"type":"note","data":{"title":"学习笔记","content":"这篇文章很有用"}}',
+            articleId: 1,
+          },
+        },
+        markdown: {
+          summary: 'Markdown 字符串',
+          value: {
+            content:
+              '# 学习笔记\n\n## 重点内容\n- 依赖注入\n- 装饰器\n\n```ts\n@Injectable()\nexport class AppService {}\n```',
+            articleId: 1,
+          },
+        },
+      },
+    },
+  })
   @Post()
   create(
     @Body() createNoteDto: CreateNoteDto,
@@ -131,70 +173,162 @@ export class NoteController {
   })
   @ApiResponse({
     status: 200,
-    description: '获取笔记列表成功',
+    description: '获取笔记列表成功（分页返回 data+pagination；未分页返回数组）',
     schema: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          id: { type: 'number', example: 1, description: '笔记ID' },
-          // 注意：列表接口不返回笔记内容 content 字段
-          userId: { type: 'number', example: 1, description: '用户ID' },
-          articleId: { type: 'number', example: 1, description: '文章ID' },
-          createdAt: {
-            type: 'string',
-            format: 'date-time',
-            example: '2024-01-01T00:00:00.000Z',
-            description: '创建时间',
-          },
-          updatedAt: {
-            type: 'string',
-            format: 'date-time',
-            example: '2024-01-01T00:00:00.000Z',
-            description: '更新时间',
-          },
-          user: {
-            type: 'object',
-            properties: {
-              id: { type: 'number', example: 1 },
-              name: { type: 'string', example: '张三' },
-              email: { type: 'string', example: 'zhangsan@example.com' },
+      oneOf: [
+        {
+          type: 'object',
+          properties: {
+            data: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'number', example: 1, description: '笔记ID' },
+                  // 注意：列表接口不返回笔记内容 content 字段
+                  userId: { type: 'number', example: 1, description: '用户ID' },
+                  articleId: {
+                    type: 'number',
+                    example: 1,
+                    description: '文章ID',
+                  },
+                  createdAt: {
+                    type: 'string',
+                    format: 'date-time',
+                    example: '2024-01-01T00:00:00.000Z',
+                    description: '创建时间',
+                  },
+                  updatedAt: {
+                    type: 'string',
+                    format: 'date-time',
+                    example: '2024-01-01T00:00:00.000Z',
+                    description: '更新时间',
+                  },
+                  user: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'number', example: 1 },
+                      name: { type: 'string', example: '张三' },
+                      email: {
+                        type: 'string',
+                        example: 'zhangsan@example.com',
+                      },
+                    },
+                    description: '用户信息',
+                  },
+                  article: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'number', example: 1 },
+                      title: { type: 'string', example: '如何学习NestJS' },
+                      summary: {
+                        type: 'string',
+                        example: '本文介绍了NestJS的基本概念和使用方法...',
+                        description: '文章概述',
+                      },
+                      cover: {
+                        type: 'string',
+                        example: 'https://example.com/cover.jpg',
+                        description: '封面图URL',
+                      },
+                      // 注意：列表接口不返回文章内容 content 字段
+                      published: { type: 'boolean', example: true },
+                      createdAt: {
+                        type: 'string',
+                        format: 'date-time',
+                        example: '2024-01-01T00:00:00.000Z',
+                      },
+                      author: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'number', example: 2 },
+                          name: { type: 'string', example: '李四' },
+                        },
+                        description: '文章作者信息',
+                      },
+                    },
+                    description:
+                      '文章基本信息（包含概述和封面图，不包含文章内容）',
+                  },
+                },
+              },
             },
-            description: '用户信息',
+            pagination: {
+              type: 'object',
+              properties: {
+                page: { type: 'number', example: 1 },
+                limit: { type: 'number', example: 10 },
+                total: { type: 'number', example: 42 },
+                totalPages: { type: 'number', example: 5 },
+              },
+            },
           },
-          article: {
+        },
+        {
+          type: 'array',
+          items: {
             type: 'object',
             properties: {
-              id: { type: 'number', example: 1 },
-              title: { type: 'string', example: '如何学习NestJS' },
-              summary: {
-                type: 'string',
-                example: '本文介绍了NestJS的基本概念和使用方法...',
-              },
-              cover: {
-                type: 'string',
-                example: 'https://example.com/cover.jpg',
-              },
-              // 注意：列表接口不返回文章内容 content 字段
-              published: { type: 'boolean', example: true },
+              id: { type: 'number', example: 1, description: '笔记ID' },
+              userId: { type: 'number', example: 1, description: '用户ID' },
+              articleId: { type: 'number', example: 1, description: '文章ID' },
               createdAt: {
                 type: 'string',
                 format: 'date-time',
                 example: '2024-01-01T00:00:00.000Z',
+                description: '创建时间',
               },
-              author: {
+              updatedAt: {
+                type: 'string',
+                format: 'date-time',
+                example: '2024-01-01T00:00:00.000Z',
+                description: '更新时间',
+              },
+              user: {
                 type: 'object',
                 properties: {
-                  id: { type: 'number', example: 2 },
-                  name: { type: 'string', example: '李四' },
+                  id: { type: 'number', example: 1 },
+                  name: { type: 'string', example: '张三' },
+                  email: { type: 'string', example: 'zhangsan@example.com' },
                 },
-                description: '文章作者信息',
+                description: '用户信息',
+              },
+              article: {
+                type: 'object',
+                properties: {
+                  id: { type: 'number', example: 1 },
+                  title: { type: 'string', example: '如何学习NestJS' },
+                  summary: {
+                    type: 'string',
+                    example: '本文介绍了NestJS的基本概念和使用方法...',
+                    description: '文章概述',
+                  },
+                  cover: {
+                    type: 'string',
+                    example: 'https://example.com/cover.jpg',
+                    description: '封面图URL',
+                  },
+                  published: { type: 'boolean', example: true },
+                  createdAt: {
+                    type: 'string',
+                    format: 'date-time',
+                    example: '2024-01-01T00:00:00.000Z',
+                  },
+                  author: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'number', example: 2 },
+                      name: { type: 'string', example: '李四' },
+                    },
+                    description: '文章作者信息',
+                  },
+                },
+                description: '文章基本信息（包含概述和封面图，不包含文章内容）',
               },
             },
-            description: '文章基本信息（包含概述和封面图，不包含文章内容）',
           },
         },
-      },
+      ],
     },
   })
   @ApiResponse({
@@ -209,14 +343,14 @@ export class NoteController {
   })
   @ApiQuery({
     name: 'page',
-    description: '页码',
+    description: '页码（起始为 1）',
     required: false,
     type: Number,
     example: 1,
   })
   @ApiQuery({
     name: 'limit',
-    description: '每页数量',
+    description: '每页数量（最大建议 100）',
     required: false,
     type: Number,
     example: 10,
@@ -494,6 +628,42 @@ export class NoteController {
         statusCode: { type: 'number', example: 404 },
         message: { type: 'string', example: '笔记不存在' },
         error: { type: 'string', example: 'Not Found' },
+      },
+    },
+  })
+  @ApiBody({
+    description:
+      '更新笔记请求体。content 支持字符串、JSON 字符串、Markdown 等特殊格式字符串。',
+    schema: {
+      type: 'object',
+      properties: {
+        content: {
+          type: 'string',
+          description:
+            '笔记内容，支持字符串、JSON 对象转换的字符串、Markdown 等大部分特殊格式字符串',
+        },
+      },
+      examples: {
+        plain: {
+          summary: '纯文本',
+          value: {
+            content: '更新后的笔记内容，增加了若干要点说明。',
+          },
+        },
+        jsonString: {
+          summary: 'JSON 字符串',
+          value: {
+            content:
+              '{"updated":true,"type":"note","data":{"title":"学习笔记","content":"这篇文章很有用"}}',
+          },
+        },
+        markdown: {
+          summary: 'Markdown 字符串',
+          value: {
+            content:
+              '# 更新后的笔记\n\n## 新内容\n- 更新项目1\n- 更新项目2\n\n```json\n{"key":"value"}\n```',
+          },
+        },
       },
     },
   })
